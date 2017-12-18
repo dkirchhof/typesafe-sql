@@ -1,0 +1,19 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",
+        "sourceMap": true,
+		"noImplicitAny": true,
+		"experimentalDecorators": true,
+        "module": "commonjs",
+        "target": "es2017",
+		"allowJs": false,
+		"strictNullChecks": true
+	},
+    "include": [
+        "./src/**/*.ts"
+    ],
+	"exclude": [
+        "node_modules",
+		"tests"
+	]	
+}
