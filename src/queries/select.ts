@@ -88,8 +88,25 @@ class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, A
 
 	async execute(databaseProvider: IDatabaseProvider): Promise<Record<Alias1, Type1>[] & Record<Alias2, Type2>[] & Record<Alias3, Type3>[] & Record<Alias4, Type4>[]>
 	{
-		const result = await databaseProvider.get(this.toSQL());		
-		return result;
+		const result = await databaseProvider.get(this.toSQL());
+		
+		const mappedResult = result.map(item =>
+		{
+			const mappedItem: any = {};
+
+			this.tables.forEach(table => mappedItem[table] = {});
+
+			const keys = Object.keys(item);
+			keys.forEach(key => 
+			{
+				const [, table, attribute ] = <string[]>key.match(/(.*)_(.*)/);
+				mappedItem[table][attribute] = item[key];
+			});
+
+			return mappedItem;
+		});
+		
+		return mappedResult;
 	}
 
 	toSQL()
