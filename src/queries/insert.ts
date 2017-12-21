@@ -1,8 +1,9 @@
+import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 
-export function insertInto<Type, Alias extends string>(table: Table<Type, Alias>): InsertQuery<Type, Alias>
+export function insertInto<Type, Alias extends string>(databaseProvider: IDatabaseProvider, table: Table<Type, Alias>): InsertQuery<Type, Alias>
 {
-	return new InsertQuery(table.alias);
+	return new InsertQuery(databaseProvider, table.alias);
 }
 
 class InsertQuery<Type, Alias extends string>
@@ -10,7 +11,7 @@ class InsertQuery<Type, Alias extends string>
 	private keyList: string[];
 	private valueList: string[];
 
-	constructor(private table: string) { }
+	constructor(private databaseProvider: IDatabaseProvider, private table: string) { }
 
 	values(data: Type)
 	{
@@ -20,11 +21,10 @@ class InsertQuery<Type, Alias extends string>
 		return this;
 	}
 
-	execute()
+	async execute()
 	{
-		// this.toSQL()
-
-		return { changes: 1, lastID: 1 };
+		const { changes, lastID } = await this.databaseProvider.execute(this.toSQL());
+		return { changes, lastID };
 	}
 
 	toSQL()
