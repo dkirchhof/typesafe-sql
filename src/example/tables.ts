@@ -1,4 +1,3 @@
-import { Query } from "../Query";
 import { Table } from "../Table";
 
 interface IBlog
