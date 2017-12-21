@@ -3,7 +3,7 @@ import { Table } from "../Table";
 
 export function insertInto<Type, Alias extends string>(databaseProvider: IDatabaseProvider, table: Table<Type, Alias>): InsertQuery<Type, Alias>
 {
-	return new InsertQuery(databaseProvider, table.alias);
+	return new InsertQuery(table.alias);
 }
 
 class InsertQuery<Type, Alias extends string>
@@ -11,7 +11,7 @@ class InsertQuery<Type, Alias extends string>
 	private keyList: string[];
 	private valueList: string[];
 
-	constructor(private databaseProvider: IDatabaseProvider, private table: string) { }
+	constructor(private table: string) { }
 
 	values(data: Type)
 	{
@@ -21,9 +21,9 @@ class InsertQuery<Type, Alias extends string>
 		return this;
 	}
 
-	async execute()
+	async execute(databaseProvider: IDatabaseProvider)
 	{
-		const { changes, lastID } = await this.databaseProvider.execute(this.toSQL());
+		const { changes, lastID } = await databaseProvider.execute(this.toSQL());
 		return { changes, lastID };
 	}
 

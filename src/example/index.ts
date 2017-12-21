@@ -20,9 +20,9 @@ import { open } from "sqlite"
 	// const result = await db.run(`INSERT INTO person VALUES(2, "fdsf", "gergerg"), (3, "fdsf", "grgger")`);
 	// console.log(result, result.lastID);
 
-	// const result = await select(databaseProvider, BLOG, ["id"], PERSON, ["firstname", "lastname"])
+	// const result = await select(BLOG, ["id"], PERSON, ["firstname", "lastname"])
 	// 	.joinOn(BLOG, "authorId", PERSON, "id")
-	// 	.where(BLOG, "id", 1).getMany();
+	// 	.where(BLOG, "id", 1).execute(databaseProvider);
 
 	// console.log(result);
 
@@ -32,8 +32,11 @@ import { open } from "sqlite"
 
 	// console.log(result2);
 
-	const result3 = await select(databaseProvider, PERSON, [ "id", "firstname", "lastname" ]).limit(1).execute();
-	console.log(result3);
+	const result3 = await select(PERSON, [ "id", "firstname", "lastname" ])
+		.limit(1)
+		.execute(databaseProvider);
+	
+		console.log(result3);
 
 	db.close();
 
