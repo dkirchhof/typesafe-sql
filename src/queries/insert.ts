@@ -1,9 +1,10 @@
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
+import { sanitizeValue } from "../utils";
 
 export function insertInto<Type>(table: Table<Type>): InsertQuery<Type>
 {
-	return new InsertQuery(table.tableName);
+	return new InsertQuery(table);
 }
 
 class InsertQuery<Type>
@@ -11,24 +12,24 @@ class InsertQuery<Type>
 	private keyList: string[];
 	private valueList: string[];
 
-	constructor(private table: string) { }
+	constructor(private table: Table<Type>) { }
 
-	values(data: Type)
+	values(values: Type)
 	{
-		this.keyList = Object.keys(data);
-		this.valueList = Object.values(data).map(value => typeof value === "string" ? `"${value}"` : value)
+		this.keyList = Object.keys(values);
+		this.valueList = Object.values(values).map(value => sanitizeValue(value))
 
 		return this;
 	}
 
 	async execute(databaseProvider: IDatabaseProvider)
 	{
-		const { changes, lastID } = await databaseProvider.execute(this.toSQL());
-		return { changes, lastID };
+		const { lastID } = await databaseProvider.execute(this.toSQL());
+		return lastID;
 	}
 
 	toSQL()
 	{
-		return `INSERT INTO ${this.table}(${this.keyList.join(", ")}) VALUES(${this.valueList.join(", ")})`;
+		return `INSERT INTO ${this.table.tableName}(${this.keyList.join(", ")}) VALUES(${this.valueList.join(", ")})`;
 	}
 }

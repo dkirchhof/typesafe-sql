@@ -1,5 +1,6 @@
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { AliasedTable } from "../Table";
+import { sanitizeValue } from "../utils";
 
 export function select<
 	Type1, Alias1 extends string, Key1 extends keyof Type1>
@@ -67,7 +68,7 @@ class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, A
 
 	where<TypeA, AliasA extends string, Key extends keyof TypeA>(table: AliasedTable<any, any>, key: Key, value: TypeA[Key])
 	{
-		this.filters.push(`${table.alias}.${key} = ${value}`);
+		this.filters.push(`${table.alias}.${key} = ${sanitizeValue(value)}`);
 		
 		return this;
 	}

@@ -5,6 +5,7 @@ import { createTable, ForeignKey } from "../queries/create";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { open } from "sqlite"
 import { AliasedTable } from "../Table";
+import { update } from "../queries/update";
 
 (async () =>
 {
@@ -77,6 +78,19 @@ import { AliasedTable } from "../Table";
 		.execute(databaseProvider);
 
 	console.log(result);
+
+	const result2 = await update(BLOG)
+		.set({ name: "Updated Blog" })
+		.where("id", 1)
+		.execute(databaseProvider);
+
+	console.log(result2);
+
+	const result3 = await select(ALIASED_BLOG, [ "id", "name" ], ALIASED_PERSON, [ "firstname", "lastname" ])
+		.joinOn(ALIASED_BLOG, "authorId", ALIASED_PERSON, "id")
+		.execute(databaseProvider);
+
+	console.log(result3);
 
 	db.close();
 })();

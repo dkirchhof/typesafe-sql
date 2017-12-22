@@ -34,9 +34,9 @@ class CreateQuery<Type>
 
 	columns(columns: MappedType<Type>)
 	{
-		Object.keys(columns).forEach(column =>
+		Object.keys(columns).forEach((column: keyof MappedType<Type>) =>
 		{
-			const columnOptions: IColumnOptions = (<any>columns)[column];
+			const columnOptions = columns[column];
 
 			let string = `${column} ${columnOptions.dataType}`;
 			
