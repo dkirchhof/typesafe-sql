@@ -1,12 +1,12 @@
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 
-export function insertInto<Type, Alias extends string>(databaseProvider: IDatabaseProvider, table: Table<Type, Alias>): InsertQuery<Type, Alias>
+export function insertInto<Type>(table: Table<Type>): InsertQuery<Type>
 {
-	return new InsertQuery(table.alias);
+	return new InsertQuery(table.tableName);
 }
 
-class InsertQuery<Type, Alias extends string>
+class InsertQuery<Type>
 {
 	private keyList: string[];
 	private valueList: string[];
