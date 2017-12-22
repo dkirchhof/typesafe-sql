@@ -22,6 +22,6 @@ interface IPerson
 	lastname: string;
 }
 
-export const BLOG = new Table<IBlog, "blog">("blog");
-export const POST = new Table<IPost, "post">("post");
-export const PERSON = new Table<IPerson, "person">("person");
+export const BLOG = new Table<IBlog>("blog");
+export const POST = new Table<IPost>("post");
+export const PERSON = new Table<IPerson>("person");

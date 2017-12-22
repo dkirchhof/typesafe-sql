@@ -1,4 +1,9 @@
-export class Table<Type, Alias extends string>
+export class Table<Type>
 {
-	constructor(public readonly alias: Alias) { }
+	constructor(public readonly tableName: string) { }
+}
+
+export class AliasedTable<Type, Alias extends string>
+{
+	constructor(public readonly table: Table<Type>, public readonly alias: Alias) { }
 }
