@@ -3,14 +3,6 @@ import { select } from "../queries/select";
 import { insertInto } from "../queries/insert";
 import { createTable, ForeignKey } from "../queries/create";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
-
-
-
-// const insertQuery = insertInto(BLOG)
-// 	.values({ id: 1, authorId: 1, content: "hallo", name: "test blog" });
-
-// console.log(insertQuery.toSQL());
-
 import { open } from "sqlite"
 import { AliasedTable } from "../Table";
 
@@ -19,6 +11,9 @@ import { AliasedTable } from "../Table";
 	// let db = await open("testDatabase/db.db");
 	let db = await open(":memory:");
 	let databaseProvider = new SQLiteProvider(db);
+	
+	// enable foreign keys
+	await db.get("PRAGMA foreign_keys = ON");
 
 	// const result = await db.run(`INSERT INTO person VALUES(2, "fdsf", "gergerg"), (3, "fdsf", "grgger")`);
 	// console.log(result, result.lastID);
@@ -35,22 +30,14 @@ import { AliasedTable } from "../Table";
 
 	// console.log(result2);
 
-	const ALIASED_PERSON = new AliasedTable(PERSON, "person");
-	// const ALIASED_PERSON2 = new AliasedTable(PERSON, "person2");
-	// const ALIASED_BLOG = new AliasedTable(BLOG, "blog");
+	
 
 	// const result3 = await select(ALIASED_PERSON, [ "id", "firstname", "lastname" ], ALIASED_BLOG, [ "name" ])
 	// 	.execute(databaseProvider);
 	
 	// console.log(result3[0].blog);
 
-
-	// const result4 = await select(ALIASED_PERSON, [ "firstname" ], ALIASED_PERSON2, [ "firstname" ])
-	// 	.execute(databaseProvider);
-
-	// console.log(result4[0]);
-
-
+	
 	await createTable(PERSON)
 		.columns(
 		{ 
@@ -60,20 +47,36 @@ import { AliasedTable } from "../Table";
 		})
 		.execute(databaseProvider);
 
-	const result = await select(ALIASED_PERSON, [ "id", "firstname", "lastname" ]).execute(databaseProvider);
-	console.log(result);
+	await createTable(BLOG)
+		.columns(
+		{
+			id: { dataType: "INT", primary: true },
+			authorId: { dataType: "INT", foreign: new ForeignKey(PERSON, "id") },
+			name: { dataType: "TEXT", notNull: true, unique: true },
+			content: { dataType: "TEXT", notNull: true }
+		})
+		.execute(databaseProvider);
 
 	await insertInto(PERSON)
 		.values({ id: 1, firstname: "Max", lastname: "Mustermann" })
 		.execute(databaseProvider);
 
-	const result2 = await select(ALIASED_PERSON, [ "id", "firstname", "lastname" ]).execute(databaseProvider);
-	console.log(result2);
+	await insertInto(BLOG)
+		.values({ id: 1, authorId: 1, name: "Testblog", content: "Das ist ein Testblog" })
+		.execute(databaseProvider);
 
-	
+	await insertInto(BLOG)
+		.values({ id: 2, authorId: 1, name: "Testblog 2", content: "Das ist ein weiterer Testblog" })
+		.execute(databaseProvider);
+		
+	const ALIASED_BLOG = new AliasedTable(BLOG, "blog");
+	const ALIASED_PERSON = new AliasedTable(PERSON, "author");
+
+	const result = await select(ALIASED_BLOG, [ "id", "name" ], ALIASED_PERSON, [ "firstname", "lastname" ])
+		.joinOn(ALIASED_BLOG, "authorId", ALIASED_PERSON, "id")
+		.execute(databaseProvider);
+
+	console.log(result);
 
 	db.close();
-
-	// lastID: 2,
-	// changes: 1 
 })();

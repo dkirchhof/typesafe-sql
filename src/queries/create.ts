@@ -6,20 +6,22 @@ export function createTable<Type>(table: Table<Type>)
 	return new CreateQuery(table);
 }
 
-type MappedType<T> = { [K in keyof T]: IColumnOptions };
+type MappedType<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
+type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE"
 
-interface IColumnOptions
+interface IColumnOptions<Type>
 {
 	dataType: "TEXT" | "INT";
 	primary?: boolean;
 	foreign?: ForeignKey<any>
 	notNull?: boolean;
 	unique?: boolean;
+	default?: Type;
 }
 
 export class ForeignKey<Type>
 {
-	constructor(public readonly table: Table<Type>, public readonly column: keyof Type) { }
+	constructor(public readonly table: Table<Type>, public readonly column: keyof Type, public readonly onDelete: Action = "NO ACTION", public readonly onUpdate: Action = "NO ACTION") { }
 }
 
 class CreateQuery<Type>
@@ -50,7 +52,12 @@ class CreateQuery<Type>
 
 			if(columnOptions.foreign !== undefined)
 			{
-				string += ` REFERENCES ${columnOptions.foreign.table.tableName}(${columnOptions.foreign.column})`;
+				const table = columnOptions.foreign.table.tableName;
+				const column = columnOptions.foreign.column;
+				const onDelete = columnOptions.foreign.onDelete;
+				const onUpdate = columnOptions.foreign.onUpdate;
+
+				string += ` REFERENCES ${table}(${column}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
 			}
 
 			this.columnList.push(string);
