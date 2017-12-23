@@ -59,7 +59,7 @@ export function select(
 	return new Query(tables, attributes);
 }
 
-class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, Alias3 extends string, Type4, Alias4 extends string>
+export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, Alias3 extends string, Type4, Alias4 extends string>
 {
 	private filters: string[] = [];
 	private limitParam: number;

@@ -7,7 +7,7 @@ export function update<Type>(table: Table<Type>): UpdateQuery<Type>
 	return new UpdateQuery(table);
 }
 
-class UpdateQuery<Type>
+export class UpdateQuery<Type>
 {
 	private values: string[];
 	private filters: string[] = [];

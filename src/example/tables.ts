@@ -1,6 +1,6 @@
 import { Table } from "../Table";
 
-interface IBlog
+export interface IBlog
 {
 	id: number;
 	name: string;
@@ -8,14 +8,14 @@ interface IBlog
 	content: string;
 }
 
-interface IPost
+export interface IPost
 {
 	id: number;
 	blogId: number;
 	content: string;
 }
 
-interface IPerson
+export interface IPerson
 {
 	id: number;
 	firstname: string;

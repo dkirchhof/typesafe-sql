@@ -10,7 +10,7 @@ export class SQLiteProvider implements IDatabaseProvider
 		return this.db.all(sql);
 	}
 
-	async execute(sql: string)
+	async execute(sql: string): Promise<any>
 	{
 		return this.db.run(sql);
 	}

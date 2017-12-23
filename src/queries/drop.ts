@@ -6,7 +6,7 @@ export function dropTable<Type>(table: Table<Type>)
 	return new DropQuery(table);
 }
 
-class DropQuery<Type>
+export class DropQuery<Type>
 {
 	constructor(private readonly table: Table<Type>) { }
 

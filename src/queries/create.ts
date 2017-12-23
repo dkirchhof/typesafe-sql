@@ -6,10 +6,10 @@ export function createTable<Type>(table: Table<Type>)
 	return new CreateQuery(table);
 }
 
-type MappedType<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
-type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE"
+export type MappedType<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
+export type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE"
 
-interface IColumnOptions<Type>
+export interface IColumnOptions<Type>
 {
 	dataType: "TEXT" | "INT";
 	primary?: boolean;
@@ -24,7 +24,7 @@ export class ForeignKey<Type>
 	constructor(public readonly table: Table<Type>, public readonly column: keyof Type, public readonly onDelete: Action = "NO ACTION", public readonly onUpdate: Action = "NO ACTION") { }
 }
 
-class CreateQuery<Type>
+export class CreateQuery<Type>
 {
 	private columnList: string[] = [];
 	private primaryList: string[] = [];

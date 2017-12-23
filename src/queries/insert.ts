@@ -7,7 +7,7 @@ export function insertInto<Type>(table: Table<Type>): InsertQuery<Type>
 	return new InsertQuery(table);
 }
 
-class InsertQuery<Type>
+export class InsertQuery<Type>
 {
 	private keyList: string[];
 	private valueList: string[];
