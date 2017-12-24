@@ -66,7 +66,7 @@ export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, T
 
 	constructor(private aliasedTables: AliasedTable<any, any>[], private attributes: string[]) { }
 
-	where<TypeA, AliasA extends string, Key extends keyof TypeA>(table: AliasedTable<any, any>, key: Key, value: TypeA[Key])
+	where<TypeA, AliasA extends string, Key extends keyof TypeA>(table: AliasedTable<TypeA, AliasA>, key: Key, value: TypeA[Key])
 	{
 		this.filters.push(`${table.alias}.${key} = ${sanitizeValue(value)}`);
 		
