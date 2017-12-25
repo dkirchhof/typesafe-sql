@@ -7,3 +7,4 @@ export * from "./queries/drop";
 export * from "./queries/insert";
 export * from "./queries/select";
 export * from "./queries/update";
+export * from "./queries/delete";
