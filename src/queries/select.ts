@@ -87,7 +87,7 @@ export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, T
 		return this;
 	}
 
-	async execute(databaseProvider: IDatabaseProvider): Promise<Record<Alias1, Type1>[] & Record<Alias2, Type2>[] & Record<Alias3, Type3>[] & Record<Alias4, Type4>[]>
+	async execute(databaseProvider: IDatabaseProvider): Promise<(Record<Alias1, Type1> & Record<Alias2, Type2> & Record<Alias3, Type3> & Record<Alias4, Type4>)[]>
 	{
 		const result = await databaseProvider.get(this.toSQL());
 		
