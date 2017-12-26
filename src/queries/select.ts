@@ -62,6 +62,7 @@ export function select(
 export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, Alias3 extends string, Type4, Alias4 extends string>
 {
 	private filters: string[] = [];
+	private orderParams: string[] = [];
 	private limitParam: number;
 
 	constructor(private aliasedTables: AliasedTable<any, any>[], private attributes: string[]) { }
@@ -77,6 +78,13 @@ export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, T
 	{
 		this.filters.push(`${aliasedTable1.alias}.${key1} = ${aliasedTable2.alias}.${key2}`);
 		
+		return this;
+	}
+
+	orderBy<Type, Alias extends string, Key extends keyof Type>(table: AliasedTable<Type, Alias>, column: Key, direction: "ASC" | "DESC" = "ASC")
+	{
+		this.orderParams.push(`${table.alias}_${column} ${direction}`);
+
 		return this;
 	}
 
@@ -117,6 +125,11 @@ export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, T
 		if(this.filters.length)
 		{
 			sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+		}
+
+		if(this.orderParams.length)
+		{
+			sql = `${sql} ORDER BY ${this.orderParams.join(" ,")}`;
 		}
 
 		if(this.limitParam !== undefined)
