@@ -8,6 +8,10 @@ export function sanitizeValue(value: any)
 	{
 		return `"${value.toISOString()}"`;
 	}
-	
-	return value.toString();
+	if(value !== undefined && value !== null)
+	{
+		return value.toString();
+	}
+
+	return null;
 }
