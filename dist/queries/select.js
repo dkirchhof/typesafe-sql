@@ -7,7 +7,7 @@ function select(aliasedTable1, attributes1, aliasedTable2, attributes2, aliasedT
     const map = (table, selectedAttributes) => {
         if (table && selectedAttributes) {
             tables.push(table);
-            const mapped = selectedAttributes.map(attribute => `${table.alias}.${attribute} AS ${table.alias}_${attribute}`);
+            const mapped = selectedAttributes.map(attribute => ({ tableName: table.alias, attributeName: attribute }));
             attributes = attributes.concat(mapped);
         }
     };
@@ -23,14 +23,23 @@ class Query {
         this.aliasedTables = aliasedTables;
         this.attributes = attributes;
         this.filters = [];
+        this.groupByParams = [];
         this.orderParams = [];
     }
-    where(table, key, value) {
-        this.filters.push(`${table.alias}.${key} = ${utils_1.sanitizeValue(value)}`);
+    aggregate(table, column, aggregationType) {
+        this.attributes.find(attribute => attribute.tableName === table.alias && attribute.attributeName === column).aggregation = aggregationType;
+        return this;
+    }
+    where(table, column, value) {
+        this.filters.push(`${table.alias}.${column} = ${utils_1.sanitizeValue(value)}`);
         return this;
     }
     joinOn(aliasedTable1, key1, aliasedTable2, key2) {
         this.filters.push(`${aliasedTable1.alias}.${key1} = ${aliasedTable2.alias}.${key2}`);
+        return this;
+    }
+    groupBy(table, column) {
+        this.groupByParams.push(`${table.alias}_${column}`);
         return this;
     }
     orderBy(table, column, direction = "ASC") {
@@ -56,9 +65,21 @@ class Query {
         return mappedResult;
     }
     toSQL() {
-        let sql = `SELECT ${this.attributes.join(", ")} FROM ${this.aliasedTables.map(AliasedTable => `${AliasedTable.table.tableName} ${AliasedTable.alias}`).join(", ")}`;
+        const attributes = this.attributes.map(attribute => {
+            let attributeName = `${attribute.tableName}.${attribute.attributeName}`;
+            if (attribute.aggregation) {
+                attributeName = `${attribute.aggregation}(${attributeName})`;
+            }
+            const attributeAlias = `${attribute.tableName}_${attribute.attributeName}`;
+            return `${attributeName} AS ${attributeAlias}`;
+        });
+        const tables = this.aliasedTables.map(aliasedTable => `${aliasedTable.table.tableName} ${aliasedTable.alias}`);
+        let sql = `SELECT ${attributes.join(", ")} FROM ${tables.join(", ")}`;
         if (this.filters.length) {
             sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+        }
+        if (this.groupByParams.length) {
+            sql = `${sql} GROUP BY ${this.groupByParams.join(" ,")}`;
         }
         if (this.orderParams.length) {
             sql = `${sql} ORDER BY ${this.orderParams.join(" ,")}`;

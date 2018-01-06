@@ -2,6 +2,9 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { AliasedTable } from "../Table";
 import { sanitizeValue } from "../utils";
 
+export type AggregationType = "COUNT" | "SUM" | "AVG";
+export type Attribute = { tableName: string; attributeName: string; aggregation?: AggregationType; }
+
 export function select<
 	Type1, Alias1 extends string, Key1 extends keyof Type1>
 	(aliasedTable1: AliasedTable<Type1, Alias1>, attributes1: Key1[])
@@ -38,7 +41,7 @@ export function select(
 	aliasedTable4?: AliasedTable<any, any>, attributes4?: string[])
 {
 	const tables: AliasedTable<any, any>[] = [];
-	let attributes: string[] = [];
+	let attributes: Attribute[] = [];
 
 	const map = (table: AliasedTable<any, any> | undefined, selectedAttributes: string[] | undefined) =>
 	{
@@ -46,7 +49,7 @@ export function select(
 		{
 			tables.push(table);
 
-			const mapped = selectedAttributes.map(attribute => `${table.alias}.${attribute} AS ${table.alias}_${attribute}`);
+			const mapped: Attribute[] = selectedAttributes.map(attribute => ({ tableName: table.alias, attributeName: attribute }));
 			attributes = attributes.concat(mapped);
 		}
 	}
@@ -62,14 +65,22 @@ export function select(
 export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, Alias3 extends string, Type4, Alias4 extends string>
 {
 	private filters: string[] = [];
+	private groupByParams: string[] = [];
 	private orderParams: string[] = [];
 	private limitParam: number;
 
-	constructor(private aliasedTables: AliasedTable<any, any>[], private attributes: string[]) { }
+	constructor(private aliasedTables: AliasedTable<any, any>[], private attributes: Attribute[]) { }
 
-	where<TypeA, AliasA extends string, Key extends keyof TypeA>(table: AliasedTable<TypeA, AliasA>, key: Key, value: TypeA[Key])
+	aggregate<Type, Alias extends string, Key extends keyof Type>(table: AliasedTable<Type, Alias>, column: Key, aggregationType: AggregationType)
 	{
-		this.filters.push(`${table.alias}.${key} = ${sanitizeValue(value)}`);
+		this.attributes.find(attribute => attribute.tableName === table.alias && attribute.attributeName === column)!.aggregation = aggregationType;
+
+		return this;
+	}
+
+	where<TypeA, AliasA extends string, Key extends keyof TypeA>(table: AliasedTable<TypeA, AliasA>, column: Key, value: TypeA[Key])
+	{
+		this.filters.push(`${table.alias}.${column} = ${sanitizeValue(value)}`);
 		
 		return this;
 	}
@@ -78,6 +89,13 @@ export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, T
 	{
 		this.filters.push(`${aliasedTable1.alias}.${key1} = ${aliasedTable2.alias}.${key2}`);
 		
+		return this;
+	}
+
+	groupBy<Type, Alias extends string, Key extends keyof Type>(table: AliasedTable<Type, Alias>, column: Key)
+	{
+		this.groupByParams.push(`${table.alias}_${column}`);
+
 		return this;
 	}
 
@@ -120,11 +138,32 @@ export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, T
 
 	toSQL()
 	{
-		let sql = `SELECT ${this.attributes.join(", ")} FROM ${this.aliasedTables.map(AliasedTable => `${AliasedTable.table.tableName} ${AliasedTable.alias}`).join(", ")}`;
+		const attributes = this.attributes.map(attribute =>
+		{
+			let attributeName = `${attribute.tableName}.${attribute.attributeName}`;
+
+			if(attribute.aggregation)
+			{
+				attributeName = `${attribute.aggregation}(${attributeName})`;
+			}
+
+			const attributeAlias = `${attribute.tableName}_${attribute.attributeName}`;
+
+			return `${attributeName} AS ${attributeAlias}`;
+		});
+
+		const tables = this.aliasedTables.map(aliasedTable => `${aliasedTable.table.tableName} ${aliasedTable.alias}`)
+
+		let sql = `SELECT ${attributes.join(", ")} FROM ${tables.join(", ")}`;
 
 		if(this.filters.length)
 		{
 			sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+		}
+
+		if(this.groupByParams.length)
+		{
+			sql = `${sql} GROUP BY ${this.groupByParams.join(" ,")}`;
 		}
 
 		if(this.orderParams.length)

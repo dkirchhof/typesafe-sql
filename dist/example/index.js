@@ -68,14 +68,4 @@ const update_1 = require("../queries/update");
     console.log(result3);
     db.close();
 })();
-// export interface IColumnOptions<Type>
-// {
-// 	aggregate?: "MAX";
-// }
-// export type MappedType<Type, Key extends keyof Type> = { [K in Key]: IColumnOptions<Type[K]> };
-// function select<Type, Key extends keyof Type>(context: Type, data: Key[] | MappedType<Type, Key>): Pick<Type, Key>
-// {
-// }
-// select({ a: 1, b: 1 }, { a: { aggregate: "MAX" }, b: { } });
-// select({ a: 1, b: 1 }, [ "a", "b" ]); 
 //# sourceMappingURL=index.js.map
