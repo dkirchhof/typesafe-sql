@@ -2,21 +2,17 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
 
-export function deleteFrom<Type>(table: Table<Type>): DeleteQuery<Type>
-{
-	return new DeleteQuery(table);
-}
+type Filter<K extends keyof T, T> = { column: K; value: T[K] };
 
 export class DeleteQuery<Type>
 {
-	private filters: string[] = [];
+	private filters: Filter<any, any>[] = [];
 
 	constructor(private table: Table<Type>) { }
 
-	where<Key extends keyof Type>(key: Key, value: Type[Key])
+	where<Key extends keyof Type>(column: Key, value: Type[Key])
 	{
-		this.filters.push(`${key} = ${sanitizeValue(value)}`);
-		
+		this.filters.push({ column, value });
 		return this;
 	}
 
@@ -32,7 +28,8 @@ export class DeleteQuery<Type>
 
 		if(this.filters.length)
 		{
-			sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+			const filters = this.filters.map(filter => `${filter.column} = ${sanitizeValue(filter.value)}`).join(" AND ");
+			sql = `${sql} WHERE ${filters}`;
 		}
 
 		return sql;

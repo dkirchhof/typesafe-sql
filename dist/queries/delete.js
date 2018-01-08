@@ -1,17 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
-function deleteFrom(table) {
-    return new DeleteQuery(table);
-}
-exports.deleteFrom = deleteFrom;
 class DeleteQuery {
     constructor(table) {
         this.table = table;
         this.filters = [];
     }
-    where(key, value) {
-        this.filters.push(`${key} = ${utils_1.sanitizeValue(value)}`);
+    where(column, value) {
+        this.filters.push({ column, value });
         return this;
     }
     async execute(databaseProvider) {
@@ -21,7 +17,8 @@ class DeleteQuery {
     toSQL() {
         let sql = `DELETE FROM ${this.table.tableName}`;
         if (this.filters.length) {
-            sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+            const filters = this.filters.map(filter => `${filter.column} = ${utils_1.sanitizeValue(filter.value)}`).join(" AND ");
+            sql = `${sql} WHERE ${filters}`;
         }
         return sql;
     }

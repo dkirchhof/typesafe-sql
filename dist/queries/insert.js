@@ -1,25 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
-function insertInto(table) {
-    return new InsertQuery(table);
-}
-exports.insertInto = insertInto;
 class InsertQuery {
-    constructor(table) {
+    constructor(table, values) {
         this.table = table;
-    }
-    values(values) {
-        this.keyList = Object.keys(values);
-        this.valueList = Object.values(values).map(value => utils_1.sanitizeValue(value));
-        return this;
+        this.values = values;
     }
     async execute(databaseProvider) {
         const { lastID } = await databaseProvider.execute(this.toSQL());
         return lastID;
     }
     toSQL() {
-        return `INSERT INTO ${this.table.tableName}(${this.keyList.join(", ")}) VALUES(${this.valueList.join(", ")})`;
+        const columns = Object.keys(this.values).join(", ");
+        const values = Object.values(this.values).map(value => utils_1.sanitizeValue(value)).join(", ");
+        return `INSERT INTO ${this.table.tableName}(${columns}) VALUES(${values})`;
     }
 }
 exports.InsertQuery = InsertQuery;

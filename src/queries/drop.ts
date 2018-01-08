@@ -1,14 +1,9 @@
 import { Table } from "../Table";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 
-export function dropTable<Type>(table: Table<Type>)
+export class DropQuery
 {
-	return new DropQuery(table);
-}
-
-export class DropQuery<Type>
-{
-	constructor(private readonly table: Table<Type>) { }
+	constructor(private readonly table: Table<any>) { }
 
 	async execute(databaseProvider: IDatabaseProvider)
 	{

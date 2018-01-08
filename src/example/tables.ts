@@ -1,4 +1,5 @@
 import { Table } from "../Table";
+import { ForeignKey } from "../index";
 
 export interface IBlog
 {
@@ -22,21 +23,21 @@ export interface IPerson
 	lastname: string;
 }
 
-export const BLOG = new Table<IBlog>("blog", {
+export const BLOG = new Table<IBlog>("blogs", {
 	id: { dataType: "INT" },
 	name: { dataType: "TEXT" },
 	content: { dataType: "TEXT" },
 	authorId: { dataType: "INT" }
 });
 
-export const POST = new Table<IPost>("post", {
+export const POST = new Table<IPost>("posts", {
 	id: { dataType: "INT" },
 	blogId: { dataType: "INT" },
 	content: { dataType: "TEXT" }
 });
 
-export const PERSON = new Table<IPerson>("person", {
-	id: { dataType: "INT" },
+export const PERSON = new Table<IPerson>("persons", {
+	id: { dataType: "INT", primary: true },
 	firstname: { dataType: "TEXT" },
 	lastname: { dataType: "TEXT" }
 });

@@ -1,21 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
-function update(table) {
-    return new UpdateQuery(table);
-}
-exports.update = update;
 class UpdateQuery {
-    constructor(table) {
+    constructor(table, values) {
         this.table = table;
+        this.values = values;
         this.filters = [];
     }
-    set(values) {
-        this.values = Object.keys(values).map((key) => `${key} = ${utils_1.sanitizeValue(values[key])}`);
-        return this;
-    }
-    where(key, value) {
-        this.filters.push(`${key} = ${utils_1.sanitizeValue(value)}`);
+    where(column, value) {
+        this.filters.push({ column, value });
         return this;
     }
     async execute(databaseProvider) {
@@ -23,9 +16,11 @@ class UpdateQuery {
         return changes;
     }
     toSQL() {
-        let sql = `UPDATE ${this.table.tableName} SET ${this.values.join(", ")}`;
+        const values = Object.entries(this.values).map(([key, value]) => `${key} = ${utils_1.sanitizeValue(value)}`).join(", ");
+        let sql = `UPDATE ${this.table.tableName} SET ${values}`;
         if (this.filters.length) {
-            sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+            const filters = this.filters.map(filter => `${filter.column} = ${utils_1.sanitizeValue(filter.value)}`).join(" AND ");
+            sql = `${sql} WHERE ${filters}`;
         }
         return sql;
     }

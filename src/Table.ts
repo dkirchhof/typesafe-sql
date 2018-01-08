@@ -1,3 +1,9 @@
+import { CreateQuery } from "./queries/create";
+import { DropQuery } from "./queries/drop";
+import { InsertQuery } from "./queries/insert";
+import { UpdateQuery } from "./queries/update";
+import { DeleteQuery } from "./queries/delete";
+
 export interface IColumnOptions<Type>
 {
 	dataType: DataType;
@@ -37,5 +43,30 @@ export class Table<Type>
 	{
 		Object.entries(columns as ExtendedMappedTable<any>).forEach(([key, value]) => value.columnName = key);
 		this.columns = columns;
+	}
+
+	create()
+	{
+		return new CreateQuery(this);
+	}
+
+	drop()
+	{
+		return new DropQuery(this);
+	}
+
+	insert(values: Type)
+	{
+		return new InsertQuery<Type>(this, values);
+	}
+
+	update(values: Partial<Type>)
+	{
+		return new UpdateQuery<Type>(this, values);
+	}
+
+	delete()
+	{
+		return new DeleteQuery<Type>(this);
 	}
 }

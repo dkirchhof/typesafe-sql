@@ -2,29 +2,17 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
 
-export function update<Type>(table: Table<Type>): UpdateQuery<Type>
-{
-	return new UpdateQuery(table);
-}
+type Filter<K extends keyof T, T> = { column: K; value: T[K] };
 
 export class UpdateQuery<Type>
 {
-	private values: string[];
-	private filters: string[] = [];
+	private filters: Filter<any, any>[] = [];
 
-	constructor(private table: Table<Type>) { }
+	constructor(private table: Table<Type>, private values: Partial<Type>) { }
 
-	set(values: Partial<Type>)
+	where<Key extends keyof Type>(column: Key, value: Type[Key])
 	{
-		this.values = Object.keys(values).map((key: keyof Type) => `${key} = ${sanitizeValue(values[key])}`);
-
-		return this;
-	}
-
-	where<Key extends keyof Type>(key: Key, value: Type[Key])
-	{
-		this.filters.push(`${key} = ${sanitizeValue(value)}`);
-		
+		this.filters.push({ column, value });
 		return this;
 	}
 
@@ -36,11 +24,14 @@ export class UpdateQuery<Type>
 
 	toSQL()
 	{
-		let sql = `UPDATE ${this.table.tableName} SET ${this.values.join(", ")}`;
+		const values = Object.entries(this.values).map(([key, value]) => `${key} = ${sanitizeValue(value)}`).join(", ");
+
+		let sql = `UPDATE ${this.table.tableName} SET ${values}`;
 
 		if(this.filters.length)
 		{
-			sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+			const filters = this.filters.map(filter => `${filter.column} = ${sanitizeValue(filter.value)}`).join(" AND ");
+			sql = `${sql} WHERE ${filters}`;
 		}
 
 		return sql;

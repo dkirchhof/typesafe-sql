@@ -1,3 +1,8 @@
+import { CreateQuery } from "./queries/create";
+import { DropQuery } from "./queries/drop";
+import { InsertQuery } from "./queries/insert";
+import { UpdateQuery } from "./queries/update";
+import { DeleteQuery } from "./queries/delete";
 export interface IColumnOptions<Type> {
     dataType: DataType;
     primary?: boolean;
@@ -33,4 +38,9 @@ export declare class Table<Type> {
     readonly tableName: string;
     readonly columns: ExtendedMappedTable<Type>;
     constructor(tableName: string, columns: MappedTable<Type>);
+    create(): CreateQuery;
+    drop(): DropQuery;
+    insert(values: Type): InsertQuery<Type>;
+    update(values: Partial<Type>): UpdateQuery<Type>;
+    delete(): DeleteQuery<Type>;
 }
