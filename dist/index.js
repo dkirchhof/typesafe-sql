@@ -6,10 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./Table"));
 __export(require("./utils"));
 __export(require("./providers/SQLiteProvider"));
-__export(require("./queries/create"));
-__export(require("./queries/drop"));
-__export(require("./queries/insert"));
+// export * from "./queries/create";
+// export * from "./queries/drop";
+// export * from "./queries/insert";
 __export(require("./queries/select"));
-__export(require("./queries/update"));
-__export(require("./queries/delete"));
+// export * from "./queries/update";
+// export * from "./queries/delete"; 
 //# sourceMappingURL=index.js.map

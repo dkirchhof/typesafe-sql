@@ -22,6 +22,21 @@ export interface IPerson
 	lastname: string;
 }
 
-export const BLOG = new Table<IBlog>("blog");
-export const POST = new Table<IPost>("post");
-export const PERSON = new Table<IPerson>("person");
+export const BLOG = new Table<IBlog>("blog", {
+	id: { dataType: "INT" },
+	name: { dataType: "TEXT" },
+	content: { dataType: "TEXT" },
+	authorId: { dataType: "INT" }
+});
+
+export const POST = new Table<IPost>("post", {
+	id: { dataType: "INT" },
+	blogId: { dataType: "INT" },
+	content: { dataType: "TEXT" }
+});
+
+export const PERSON = new Table<IPerson>("person", {
+	id: { dataType: "INT" },
+	firstname: { dataType: "TEXT" },
+	lastname: { dataType: "TEXT" }
+});

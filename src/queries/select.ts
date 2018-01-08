@@ -1,181 +1,221 @@
-import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { AliasedTable } from "../Table";
+import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } from "../Table";
 import { sanitizeValue } from "../utils";
+import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 
-export type AggregationType = "COUNT" | "SUM" | "AVG";
-export type Attribute = { tableName: string; attributeName: string; aggregation?: AggregationType; }
+// todo: turn _attributes and _functions back to private
+// when https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058 is fixed
 
-export function select<
-	Type1, Alias1 extends string, Key1 extends keyof Type1>
-	(aliasedTable1: AliasedTable<Type1, Alias1>, attributes1: Key1[])
-	: Query<Pick<Type1, Key1>, Alias1, any, any, any, any, any, any>;
-export function select<
-	Type1, Alias1 extends string, Key1 extends keyof Type1,
-	Type2, Alias2 extends string, Key2 extends keyof Type2>
-	(aliasedTable1: AliasedTable<Type1, Alias1>, attributes1: Key1[],
-	aliasedTable2: AliasedTable<Type2, Alias2>, attributes2: Key2[])
-	: Query<Pick<Type1, Key1>, Alias1, Pick<Type2, Key2>, Alias2, any, any, any, any>;
-export function select<
-	Type1, Alias1 extends string, Key1 extends keyof Type1,
-	Type2, Alias2 extends string, Key2 extends keyof Type2,
-	Type3, Alias3 extends string, Key3 extends keyof Type3>
-	(aliasedTable1: AliasedTable<Type1, Alias1>, attributes1: Key1[],
-	aliasedTable2: AliasedTable<Type2, Alias2>, attributes2: Key2[],
-	aliasedTable3: AliasedTable<Type3, Alias3>, attributes3: Key3[])
-	: Query<Pick<Type1, Key1>, Alias1, Pick<Type2, Key2>, Alias2, Pick<Type3, Key3>, Alias3, any, any>;
-export function select<
-	Type1, Alias1 extends string, Key1 extends keyof Type1,
-	Type2, Alias2 extends string, Key2 extends keyof Type2,
-	Type3, Alias3 extends string, Key3 extends keyof Type3,
-	Type4, Alias4 extends string, Key4 extends keyof Type4>
-	(aliasedTable1: AliasedTable<Type1, Alias1>, attributes1: Key1[],
-	aliasedTable2: AliasedTable<Type2, Alias2>, attributes2: Key2[],
-	aliasedTable3: AliasedTable<Type3, Alias3>, attributes3: Key3[],
-	aliasedTable4: AliasedTable<Type4, Alias4>, attributes4: Key4[])
-	: Query<Pick<Type1, Key1>, Alias1, Pick<Type2, Key2>, Alias2, Pick<Type3, Key3>, Alias3, Pick<Type4, Key4>, Alias4>;
-
-export function select(
-	aliasedTable1?: AliasedTable<any, any>, attributes1?: string[],
-	aliasedTable2?: AliasedTable<any, any>, attributes2?: string[],
-	aliasedTable3?: AliasedTable<any, any>, attributes3?: string[],
-	aliasedTable4?: AliasedTable<any, any>, attributes4?: string[])
+export function from<
+	Type1, Alias1 extends string, 
+	Type2, Alias2 extends string> (
+	table1: Table<Type1>, alias1: Alias1,
+	table2?: Table<Type2>, alias2?: Alias2)
 {
-	const tables: AliasedTable<any, any>[] = [];
-	let attributes: Attribute[] = [];
+	type mappedRecord1 = Record<Alias1, ExtendedMappedTable<Type1>>;
+	type mappedRecord2 = Record<Alias2, ExtendedMappedTable<Type2>>;
+	type mappedRecords = mappedRecord1 & mappedRecord2;
 
-	const map = (table: AliasedTable<any, any> | undefined, selectedAttributes: string[] | undefined) =>
+	type mappedRecordsPredicate<T> = (tables: mappedRecords) => IExtendedColumnOptions<T>;
+	
+	type Source = { tableName: string; tableAlias: string; columns: ExtendedMappedTable<any> };
+	type Filter = { column: IExtendedColumnOptions<any>; value: any };
+	type JoinFilter = { column1: IExtendedColumnOptions<any>; column2: IExtendedColumnOptions<any> };
+	type GroupBy = { column: IExtendedColumnOptions<any> };
+	type OrderBy = { column: IExtendedColumnOptions<any>; direction: "ASC" | "DESC" };
+
+	type Key1 = keyof Type1;
+	type Key2 = keyof Type2;
+	
+	type PickedRecord1 = Record<Alias1, Pick<Type1, Key1>>;
+	type PickedRecord2 = Record<Alias2, Pick<Type2, Key2>>;
+	type ResultSet = PickedRecord1 & PickedRecord2;
+	
+	return new class
 	{
-		if (table && selectedAttributes)
-		{
-			tables.push(table);
+		public _sources: Source[];
+		public _filters: Filter[] = [];
+		public _joinFilters: JoinFilter[] = [];
+		public _groupByColumns: GroupBy[] = [];
+		public _orderByColumns: OrderBy[] = [];
+		public _limitTo: number;
 
-			const mapped: Attribute[] = selectedAttributes.map(attribute => ({ tableName: table.alias, attributeName: attribute }));
-			attributes = attributes.concat(mapped);
+		public _record: mappedRecords;
+
+		constructor(tablesAndAliases: IArguments)//: { table: Table<any>, alias: string }[])
+		{			
+			this._sources = this._createSources(tablesAndAliases);
+			this._record = this._createRecord(this._sources);			
 		}
-	}
 
-	map(aliasedTable1, attributes1);
-	map(aliasedTable2, attributes2);
-	map(aliasedTable3, attributes3);
-	map(aliasedTable4, attributes4);
-
-	return new Query(tables, attributes);
-}
-
-export class Query<Type1, Alias1 extends string, Type2, Alias2 extends string, Type3, Alias3 extends string, Type4, Alias4 extends string>
-{
-	private filters: string[] = [];
-	private groupByParams: string[] = [];
-	private orderParams: string[] = [];
-	private limitParam: number;
-
-	constructor(private aliasedTables: AliasedTable<any, any>[], private attributes: Attribute[]) { }
-
-	aggregate<Type, Alias extends string, Key extends keyof Type>(table: AliasedTable<Type, Alias>, column: Key, aggregationType: AggregationType)
-	{
-		this.attributes.find(attribute => attribute.tableName === table.alias && attribute.attributeName === column)!.aggregation = aggregationType;
-
-		return this;
-	}
-
-	where<TypeA, AliasA extends string, Key extends keyof TypeA>(table: AliasedTable<TypeA, AliasA>, column: Key, value: TypeA[Key])
-	{
-		this.filters.push(`${table.alias}.${column} = ${sanitizeValue(value)}`);
-		
-		return this;
-	}
-
-	joinOn<TypeA extends Type1, AliasA extends string, KeyA extends keyof TypeA, TypeB, AliasB extends string, KeyB extends keyof TypeB>(aliasedTable1: AliasedTable<TypeA, AliasA>, key1: KeyA, aliasedTable2: AliasedTable<TypeB, AliasB>, key2: KeyB)
-	{
-		this.filters.push(`${aliasedTable1.alias}.${key1} = ${aliasedTable2.alias}.${key2}`);
-		
-		return this;
-	}
-
-	groupBy<Type, Alias extends string, Key extends keyof Type>(table: AliasedTable<Type, Alias>, column: Key)
-	{
-		this.groupByParams.push(`${table.alias}_${column}`);
-
-		return this;
-	}
-
-	orderBy<Type, Alias extends string, Key extends keyof Type>(table: AliasedTable<Type, Alias>, column: Key, direction: "ASC" | "DESC" = "ASC")
-	{
-		this.orderParams.push(`${table.alias}_${column} ${direction}`);
-
-		return this;
-	}
-
-	limit(limit: number)
-	{
-		this.limitParam = limit;
-
-		return this;
-	}
-
-	async execute(databaseProvider: IDatabaseProvider): Promise<(Record<Alias1, Type1> & Record<Alias2, Type2> & Record<Alias3, Type3> & Record<Alias4, Type4>)[]>
-	{
-		const result = await databaseProvider.get(this.toSQL());
-		
-		const mappedResult = result.map(item =>
+		_createSources(sources: IArguments)
 		{
-			const mappedItem: any = {};
+			let tempSources: Source[] = [];
 
-			this.aliasedTables.forEach(aliasedTable => mappedItem[aliasedTable.alias] = {});
-
-			const keys = Object.keys(item);
-			keys.forEach(key => 
+			for(let i = 0; i < sources.length; i+=2)
 			{
-				const [, table, attribute ] = <string[]>key.match(/(.*)_(.*)/);
-				mappedItem[table][attribute] = item[key];
-			});
+				const table: Table<any> = sources[i];
+				const alias: string = sources[i+1];
 
-			return mappedItem;
-		});
-		
-		return mappedResult;
-	}
-
-	toSQL()
-	{
-		const attributes = this.attributes.map(attribute =>
-		{
-			let attributeName = `${attribute.tableName}.${attribute.attributeName}`;
-
-			if(attribute.aggregation)
-			{
-				attributeName = `${attribute.aggregation}(${attributeName})`;
+				// copy columns object
+				const columnsCopy: ExtendedMappedTable<any> = JSON.parse(JSON.stringify(table.columns));
+				// set tableAlias for each column
+				Object.values(columnsCopy).forEach(column => column.tableAlias = alias);	
+				// return mapped source
+				tempSources.push({ tableName: table.tableName, tableAlias: alias, columns: columnsCopy });
 			}
 
-			const attributeAlias = `${attribute.tableName}_${attribute.attributeName}`;
-
-			return `${attributeName} AS ${attributeAlias}`;
-		});
-
-		const tables = this.aliasedTables.map(aliasedTable => `${aliasedTable.table.tableName} ${aliasedTable.alias}`)
-
-		let sql = `SELECT ${attributes.join(", ")} FROM ${tables.join(", ")}`;
-
-		if(this.filters.length)
-		{
-			sql = `${sql} WHERE ${this.filters.join(" AND ")}`;
+			return tempSources;
 		}
 
-		if(this.groupByParams.length)
+		_createRecord(sources: Source[])
 		{
-			sql = `${sql} GROUP BY ${this.groupByParams.join(" ,")}`;
+			const tempRecord: any = { };
+			sources.forEach(source => tempRecord[source.tableAlias] = source.columns);
+
+			return tempRecord;
 		}
 
-		if(this.orderParams.length)
+		aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType)
 		{
-			sql = `${sql} ORDER BY ${this.orderParams.join(" ,")}`;
+			const column = columnSelector(this._record);
+			this._sources.find(source => source.tableAlias === column.tableAlias)!.columns[column.columnName!].aggregation = aggregationType;
+
+			return this;
+		}
+		
+		where<T>(columnSelector: mappedRecordsPredicate<T>, value: T)
+		{
+			const column = columnSelector(this._record);
+			this._filters.push({ column, value });
+
+			return this;
 		}
 
-		if(this.limitParam !== undefined)
+		joinOn<T>(columnSelector1: mappedRecordsPredicate<T>, columnSelector2: mappedRecordsPredicate<T>)
 		{
-			sql = `${sql} LIMIT ${this.limitParam}`;
+			const column1 = columnSelector1(this._record);
+			const column2 = columnSelector2(this._record);
+			
+			this._joinFilters.push({ column1, column2 });
+
+			return this;
 		}
 
-		return sql;
-	}
+		groupBy(columnSelector: mappedRecordsPredicate<any>)
+		{
+			const column = columnSelector(this._record);
+			this._groupByColumns.push({ column });
+
+			return this;
+		}
+
+		orderBy(columnSelector: mappedRecordsPredicate<any>, direction: "ASC" | "DESC" = "ASC")
+		{
+			const column = columnSelector(this._record);
+			this._orderByColumns.push({ column, direction });
+
+			return this;
+		}
+
+		limit(limit: number)
+		{
+			this._limitTo = limit;
+
+			return this;
+		}
+
+		select(keys1: Key1[], keys2?: Key2[]) //: Record<Alias1, Pick<Type1, Key1>> & Record<Alias2, Pick<Type2, Key2>>
+		{
+			for(let i = 0; i < arguments.length; i++)
+			{
+				const keys: string[] = arguments[i];
+				
+				for(const key of keys)
+				{
+					this._sources[i].columns[key].selected = true;
+				}
+			}
+			
+			return new class
+			{
+				constructor(public _sources: Source[], public _filters: Filter[], public _joinFilters: JoinFilter[], public _groupByColumns: GroupBy[], public _orderByColumns: OrderBy[], public _limitTo: number) { }
+				
+				toSQL()
+				{
+					const columns = this._sources.reduce((prev, current) =>
+					{
+						const mappedColumns = Object.values(current.columns)
+							.filter(column => column.selected)
+							.map(column => 
+							{
+								let computedColumnName = `${column.tableAlias}.${column.columnName}`;
+								if(column.aggregation)
+								{
+									computedColumnName = `${column.aggregation}(${computedColumnName})`;
+								}
+
+								return `${computedColumnName} AS ${column.tableAlias}_${column.columnName}`;
+							});
+						
+						return prev.concat(mappedColumns);
+					}, [] as string[]);
+
+					const tables = this._sources.map(source => `${source.tableName} ${source.tableAlias}`);
+
+					let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
+
+					if(this._filters.length || this._joinFilters.length)
+					{
+						const joinFilters = this._joinFilters.map(filter => `${filter.column1.tableAlias}.${filter.column1.columnName} = ${filter.column2.tableAlias}.${filter.column2.columnName}`);
+						const valueFilters = this._filters.map(filter => `${filter.column.tableAlias}.${filter.column.columnName} = ${sanitizeValue(filter.value)}`);
+						const filters = joinFilters.concat(valueFilters);
+
+						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
+					}
+
+					if(this._groupByColumns.length)
+					{
+						const groupByColumns = this._groupByColumns.map(groupBy => `${groupBy.column.tableAlias}.${groupBy.column.columnName}`);
+						sql = `${sql}\n\tGROUP BY ${groupByColumns.join(" ,")}`;
+					}
+					
+					if(this._orderByColumns.length)
+					{
+						const orderByColumns = this._orderByColumns.map(orderBy => `${orderBy.column.tableAlias}.${orderBy.column.columnName}`);
+						sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
+					}
+
+					if(this._limitTo !== undefined)
+					{
+						sql = `${sql}\n\tLIMIT ${this._limitTo}`;
+					}
+					
+					return sql;
+				}
+
+				async execute(databaseProvider: IDatabaseProvider): Promise<ResultSet[]>
+				{
+					const result = await databaseProvider.get(this.toSQL());
+					
+					const mappedResult = result.map(item =>
+					{
+						const mappedItem: any = {};
+						this._sources.forEach(source => mappedItem[source.tableAlias] = {})
+
+						Object.entries(item).forEach(([key, value]) => 
+						{
+							const [, table, column ] = <string[]>key.match(/(.*)_(.*)/);
+							mappedItem[table][column] = value;
+						});
+
+						return mappedItem;
+					});
+					
+					return mappedResult;
+				}
+				
+			}(this._sources, this._filters, this._joinFilters, this._groupByColumns, this._orderByColumns, this._limitTo);
+		}
+
+	}(arguments);
 }
