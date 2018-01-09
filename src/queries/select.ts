@@ -2,8 +2,7 @@ import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } f
 import { sanitizeValue } from "../utils";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 
-// todo: turn _attributes and _functions back to private
-// when https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058 is fixed
+// waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
 
 export function from<
 	Type1, Alias1 extends string, 
@@ -32,22 +31,22 @@ export function from<
 	
 	return new class
 	{
-		public _sources: Source[];
-		public _filters: Filter[] = [];
-		public _joinFilters: JoinFilter[] = [];
-		public _groupByColumns: GroupBy[] = [];
-		public _orderByColumns: OrderBy[] = [];
-		public _limitTo: number;
+		private sources: Source[];
+		private filters: Filter[] = [];
+		private joinFilters: JoinFilter[] = [];
+		private groupByColumns: GroupBy[] = [];
+		private orderByColumns: OrderBy[] = [];
+		private limitTo: number;
 
-		public _record: mappedRecords;
+		private record: mappedRecords;
 
 		constructor(tablesAndAliases: IArguments)//: { table: Table<any>, alias: string }[])
 		{			
-			this._sources = this._createSources(tablesAndAliases);
-			this._record = this._createRecord(this._sources);			
+			this.sources = this.createSources(tablesAndAliases);
+			this.record = this.createRecord(this.sources);			
 		}
 
-		_createSources(sources: IArguments)
+		private createSources(sources: IArguments)
 		{
 			let tempSources: Source[] = [];
 
@@ -67,59 +66,59 @@ export function from<
 			return tempSources;
 		}
 
-		_createRecord(sources: Source[])
+		private createRecord(sources: Source[])
 		{
 			const tempRecord: any = { };
 			sources.forEach(source => tempRecord[source.tableAlias] = source.columns);
 
-			return tempRecord;
+			return tempRecord as mappedRecords;
 		}
 
-		aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType)
+		aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType): this
 		{
-			const column = columnSelector(this._record);
-			this._sources.find(source => source.tableAlias === column.tableAlias)!.columns[column.columnName!].aggregation = aggregationType;
+			const column = columnSelector(this.record);
+			this.sources.find(source => source.tableAlias === column.tableAlias)!.columns[column.columnName!].aggregation = aggregationType;
 
 			return this;
 		}
 		
 		where<T>(columnSelector: mappedRecordsPredicate<T>, value: T)
 		{
-			const column = columnSelector(this._record);
-			this._filters.push({ column, value });
+			const column = columnSelector(this.record);
+			this.filters.push({ column, value });
 
 			return this;
 		}
 
 		joinOn<T>(columnSelector1: mappedRecordsPredicate<T>, columnSelector2: mappedRecordsPredicate<T>)
 		{
-			const column1 = columnSelector1(this._record);
-			const column2 = columnSelector2(this._record);
+			const column1 = columnSelector1(this.record);
+			const column2 = columnSelector2(this.record);
 			
-			this._joinFilters.push({ column1, column2 });
+			this.joinFilters.push({ column1, column2 });
 
 			return this;
 		}
 
 		groupBy(columnSelector: mappedRecordsPredicate<any>)
 		{
-			const column = columnSelector(this._record);
-			this._groupByColumns.push({ column });
+			const column = columnSelector(this.record);
+			this.groupByColumns.push({ column });
 
 			return this;
 		}
 
 		orderBy(columnSelector: mappedRecordsPredicate<any>, direction: "ASC" | "DESC" = "ASC")
 		{
-			const column = columnSelector(this._record);
-			this._orderByColumns.push({ column, direction });
+			const column = columnSelector(this.record);
+			this.orderByColumns.push({ column, direction });
 
 			return this;
 		}
 
 		limit(limit: number)
 		{
-			this._limitTo = limit;
+			this.limitTo = limit;
 
 			return this;
 		}
@@ -132,17 +131,17 @@ export function from<
 				
 				for(const key of keys)
 				{
-					this._sources[i].columns[key].selected = true;
+					this.sources[i].columns[key].selected = true;
 				}
 			}
 			
 			return new class
 			{
-				constructor(public _sources: Source[], public _filters: Filter[], public _joinFilters: JoinFilter[], public _groupByColumns: GroupBy[], public _orderByColumns: OrderBy[], public _limitTo: number) { }
+				constructor(private sources: Source[], private filters: Filter[], private joinFilters: JoinFilter[], private groupByColumns: GroupBy[], private orderByColumns: OrderBy[], private limitTo: number) { }
 				
 				toSQL()
 				{
-					const columns = this._sources.reduce((prev, current) =>
+					const columns = this.sources.reduce((prev, current) =>
 					{
 						const mappedColumns = Object.values(current.columns)
 							.filter(column => column.selected)
@@ -160,34 +159,34 @@ export function from<
 						return prev.concat(mappedColumns);
 					}, [] as string[]);
 
-					const tables = this._sources.map(source => `${source.tableName} ${source.tableAlias}`);
+					const tables = this.sources.map(source => `${source.tableName} ${source.tableAlias}`);
 
 					let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
 
-					if(this._filters.length || this._joinFilters.length)
+					if(this.filters.length || this.joinFilters.length)
 					{
-						const joinFilters = this._joinFilters.map(filter => `${filter.column1.tableAlias}.${filter.column1.columnName} = ${filter.column2.tableAlias}.${filter.column2.columnName}`);
-						const valueFilters = this._filters.map(filter => `${filter.column.tableAlias}.${filter.column.columnName} = ${sanitizeValue(filter.value)}`);
+						const joinFilters = this.joinFilters.map(filter => `${filter.column1.tableAlias}.${filter.column1.columnName} = ${filter.column2.tableAlias}.${filter.column2.columnName}`);
+						const valueFilters = this.filters.map(filter => `${filter.column.tableAlias}.${filter.column.columnName} = ${sanitizeValue(filter.value)}`);
 						const filters = joinFilters.concat(valueFilters);
 
 						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
 					}
 
-					if(this._groupByColumns.length)
+					if(this.groupByColumns.length)
 					{
-						const groupByColumns = this._groupByColumns.map(groupBy => `${groupBy.column.tableAlias}.${groupBy.column.columnName}`);
+						const groupByColumns = this.groupByColumns.map(groupBy => `${groupBy.column.tableAlias}.${groupBy.column.columnName}`);
 						sql = `${sql}\n\tGROUP BY ${groupByColumns.join(" ,")}`;
 					}
 					
-					if(this._orderByColumns.length)
+					if(this.orderByColumns.length)
 					{
-						const orderByColumns = this._orderByColumns.map(orderBy => `${orderBy.column.tableAlias}.${orderBy.column.columnName}`);
+						const orderByColumns = this.orderByColumns.map(orderBy => `${orderBy.column.tableAlias}.${orderBy.column.columnName}`);
 						sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
 					}
 
-					if(this._limitTo !== undefined)
+					if(this.limitTo !== undefined)
 					{
-						sql = `${sql}\n\tLIMIT ${this._limitTo}`;
+						sql = `${sql}\n\tLIMIT ${this.limitTo}`;
 					}
 					
 					return sql;
@@ -200,7 +199,7 @@ export function from<
 					const mappedResult = result.map(item =>
 					{
 						const mappedItem: any = {};
-						this._sources.forEach(source => mappedItem[source.tableAlias] = {})
+						this.sources.forEach(source => mappedItem[source.tableAlias] = {})
 
 						Object.entries(item).forEach(([key, value]) => 
 						{
@@ -214,7 +213,7 @@ export function from<
 					return mappedResult;
 				}
 				
-			}(this._sources, this._filters, this._joinFilters, this._groupByColumns, this._orderByColumns, this._limitTo);
+			}(this.sources, this.filters, this.joinFilters, this.groupByColumns, this.orderByColumns, this.limitTo);
 		}
 
 	}(arguments);
