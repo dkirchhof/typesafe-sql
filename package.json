@@ -1,7 +1,7 @@
 {
   "name": "typesafe-sql",
   "version": "0.0.1",
-  "main": "./dist/index.js",
+  "main": "./src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "example": "node ./dist/example/index.js"
@@ -12,6 +12,5 @@
     "sqlite": "^2.9.0"
   },
   "devDependencies": {},
-  "description": "",
-  "typings": "./dist/index.d.ts"
+  "description": ""
 }

@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "outDir": "./dist/",
         "sourceMap": true,
 		"noImplicitAny": true,
 		"experimentalDecorators": true,
@@ -8,7 +7,7 @@
         "target": "es2017",
 		"allowJs": false,
 		"strictNullChecks": true,
-		"declaration": true
+		"declaration": false
 	},
     "include": [
         "./src/**/*.ts"
