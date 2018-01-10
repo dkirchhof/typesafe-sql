@@ -8,7 +8,7 @@ export interface IColumnOptions<Type>
 {
 	dataType: DataType;
 	primary?: boolean;
-	foreign?: ForeignKey<any>
+	references?: ForeignKey<any>
 	notNull?: boolean;
 	unique?: boolean;
 	default?: Type;
@@ -23,9 +23,12 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
 	aggregation?: AggregationType;
 }
 
-export class ForeignKey<Type>
+export interface ForeignKey<Type>
 {
-	constructor(public readonly table: Table<Type>, public readonly column: keyof Type, public readonly onDelete: Action = "NO ACTION", public readonly onUpdate: Action = "NO ACTION") { }
+	table: Table<Type>;
+	readonly column: keyof Type;
+	readonly onDelete?: Action;
+	readonly onUpdate?: Action;
 }
 
 export type MappedTable<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
