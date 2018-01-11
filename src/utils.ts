@@ -1,17 +1,33 @@
+import { IExtendedColumnOptions } from "./Table";
+
 export function sanitizeValue(value: any)
 {
 	if(typeof value === "string")
 	{
 		return `"${value}"`;
 	}
-	if(value instanceof Date)
+	else if(value instanceof Date)
 	{
 		return `"${value.toISOString()}"`;
 	}
-	if(value !== undefined && value !== null)
+	else if(isColumn(value))
+	{
+		return columnToString(value);
+	}
+	else if(value !== undefined && value !== null)
 	{
 		return value.toString();
 	}
 
 	return null;
+}
+
+export function columnToString(column: IExtendedColumnOptions<any>)
+{
+	return `${column.tableAlias}.${column.columnName}`;
+}
+
+export function isColumn(column: any): column is IExtendedColumnOptions<any>
+{
+	return (<IExtendedColumnOptions<any>>column).dataType !== undefined;
 }

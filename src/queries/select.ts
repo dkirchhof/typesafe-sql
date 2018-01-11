@@ -1,13 +1,8 @@
 import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } from "../Table";
-import { sanitizeValue } from "../utils";
+import { sanitizeValue, isColumn, columnToString } from "../utils";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
-
-function isColumn(column: any): column is IExtendedColumnOptions<any>
-{
-	return (<IExtendedColumnOptions<any>>column).dataType !== undefined;
-}
 
 export function from<
 	Type1, Alias1 extends string, 
@@ -22,7 +17,7 @@ export function from<
 	type mappedRecordsPredicate<T> = (tables: mappedRecords) => IExtendedColumnOptions<T>;
 	
 	type Source = { tableName: string; tableAlias: string; columns: ExtendedMappedTable<any> };
-	type Filter = { column: IExtendedColumnOptions<any>; valueOrColumnSelector: any | mappedRecordsPredicate<any> };
+	type Filter = { column: IExtendedColumnOptions<any>; valueOrColumn: any | mappedRecordsPredicate<any> };
 	type GroupBy = { column: IExtendedColumnOptions<any> };
 	type OrderBy = { column: IExtendedColumnOptions<any>; direction: "ASC" | "DESC" };
 
@@ -91,12 +86,11 @@ export function from<
 
 			if(typeof valueOrColumnSelector === "function")
 			{
-				const column2 = valueOrColumnSelector(this.record);
-				this.filters.push({ column, valueOrColumnSelector: column2 });
+				this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record) });
 			}
 			else
 			{
-				this.filters.push({ column, valueOrColumnSelector });
+				this.filters.push({ column, valueOrColumn: valueOrColumnSelector });
 			}
 
 			return this;
@@ -125,15 +119,22 @@ export function from<
 			return this;
 		}
 
-		select(keys1: Key1[], keys2?: Key2[]) //: Record<Alias1, Pick<Type1, Key1>> & Record<Alias2, Pick<Type2, Key2>>
+		select(keys1: Key1[], keys2?: Key2[])
 		{
 			for(let i = 0; i < arguments.length; i++)
 			{
 				const keys: string[] = arguments[i];
 				
-				for(const key of keys)
+				if(!keys.length)
 				{
-					this.sources[i].columns[key].selected = true;
+					Object.values(this.sources[i].columns).forEach(column => column.selected = true);
+				}
+				else
+				{
+					for(const key of keys)
+					{
+						this.sources[i].columns[key].selected = true;
+					}
 				}
 			}
 			
@@ -149,7 +150,7 @@ export function from<
 							.filter(column => column.selected)
 							.map(column => 
 							{
-								let computedColumnName = `${column.tableAlias}.${column.columnName}`;
+								let computedColumnName = columnToString(column);
 								if(column.aggregation)
 								{
 									computedColumnName = `${column.aggregation}(${computedColumnName})`;
@@ -161,36 +162,25 @@ export function from<
 						return prev.concat(mappedColumns);
 					}, [] as string[]);
 
-					const tables = this.sources.map(source => `${source.tableName} ${source.tableAlias}`);
+					const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
 
 					let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
 
 					if(this.filters.length)
 					{	
-						const filters = this.filters.map(filter =>
-						{
-							if(isColumn(filter.valueOrColumnSelector))
-							{
-								return `${filter.column.tableAlias}.${filter.column.columnName} = ${filter.valueOrColumnSelector.tableAlias}.${filter.valueOrColumnSelector.columnName}`;
-							}
-							else
-							{
-								return `${filter.column.tableAlias}.${filter.column.columnName} = ${sanitizeValue(filter.valueOrColumnSelector)}`;
-							}
-						});
-
+						const filters = this.filters.map(filter => `${columnToString(filter.column)} = ${sanitizeValue(filter.valueOrColumn)}`);
 						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
 					}
 
 					if(this.groupByColumns.length)
 					{
-						const groupByColumns = this.groupByColumns.map(groupBy => `${groupBy.column.tableAlias}.${groupBy.column.columnName}`);
+						const groupByColumns = this.groupByColumns.map(groupBy => columnToString(groupBy.column));
 						sql = `${sql}\n\tGROUP BY ${groupByColumns.join(" ,")}`;
 					}
 					
 					if(this.orderByColumns.length)
 					{
-						const orderByColumns = this.orderByColumns.map(orderBy => `${orderBy.column.tableAlias}.${orderBy.column.columnName}`);
+						const orderByColumns = this.orderByColumns.map(orderBy => columnToString(orderBy.column));
 						sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
 					}
 
@@ -198,7 +188,6 @@ export function from<
 					{
 						sql = `${sql}\n\tLIMIT ${this.limitTo}`;
 					}
-					console.log(sql);
 					
 					return sql;
 				}

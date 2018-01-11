@@ -16,7 +16,7 @@ import { open } from "sqlite"
 
 	await PERSON.insert({ id: 1, firstname: "Max", lastname: "Mustermann" }).execute(databaseProvider);
 	await PERSON.insert({ id: 2, firstname: "Erika", lastname: "Mustermann" }).execute(databaseProvider);
-	console.log(await from(PERSON, "person").select(["id", "firstname", "lastname"]).execute(databaseProvider));
+	// console.log(await from(PERSON, "person").select(["id", "firstname", "lastname"]).execute(databaseProvider));
 
 	await PERSON.update({ lastname: "Musterfrau" }).where("firstname", "Erika").execute(databaseProvider);
 	console.log(await from(PERSON, "person").select(["id", "firstname", "lastname"]).execute(databaseProvider));
@@ -24,6 +24,8 @@ import { open } from "sqlite"
 	await PERSON.delete().where("id", 2).execute(databaseProvider);
 	console.log(await from(PERSON, "person").select(["id", "firstname", "lastname"]).execute(databaseProvider));
 
+	console.log(await from(PERSON, "person", PERSON, "person2").where(t => t.person.id, t=> t.person2.id).select([], []).execute(databaseProvider));
+	
 	await PERSON.drop().execute(databaseProvider);
 
 	db.close();

@@ -2,9 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
-function isColumn(column) {
-    return column.dataType !== undefined;
-}
 function from(table1, alias1, table2, alias2) {
     return new class {
         constructor(tablesAndAliases) {
@@ -41,12 +38,10 @@ function from(table1, alias1, table2, alias2) {
         where(columnSelector, valueOrColumnSelector) {
             const column = columnSelector(this.record);
             if (typeof valueOrColumnSelector === "function") {
-                const column2 = valueOrColumnSelector(this.record);
-                console.log(column2, column2 instanceof IExtendedColumnOptions, typeof column2);
-                this.filters.push({ column, valueOrColumnSelector: column2 });
+                this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record) });
             }
             else {
-                this.filters.push({ column, valueOrColumnSelector });
+                this.filters.push({ column, valueOrColumn: valueOrColumnSelector });
             }
             return this;
         }
@@ -67,8 +62,13 @@ function from(table1, alias1, table2, alias2) {
         select(keys1, keys2) {
             for (let i = 0; i < arguments.length; i++) {
                 const keys = arguments[i];
-                for (const key of keys) {
-                    this.sources[i].columns[key].selected = true;
+                if (!keys.length) {
+                    Object.values(this.sources[i].columns).forEach(column => column.selected = true);
+                }
+                else {
+                    for (const key of keys) {
+                        this.sources[i].columns[key].selected = true;
+                    }
                 }
             }
             return new class {
@@ -84,7 +84,7 @@ function from(table1, alias1, table2, alias2) {
                         const mappedColumns = Object.values(current.columns)
                             .filter(column => column.selected)
                             .map(column => {
-                            let computedColumnName = `${column.tableAlias}.${column.columnName}`;
+                            let computedColumnName = utils_1.columnToString(column);
                             if (column.aggregation) {
                                 computedColumnName = `${column.aggregation}(${computedColumnName})`;
                             }
@@ -92,31 +92,23 @@ function from(table1, alias1, table2, alias2) {
                         });
                         return prev.concat(mappedColumns);
                     }, []);
-                    const tables = this.sources.map(source => `${source.tableName} ${source.tableAlias}`);
+                    const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
                     let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
                     if (this.filters.length) {
-                        const filters = this.filters.map(filter => {
-                            if (isColumn(filter.valueOrColumnSelector)) {
-                                return `${filter.column.tableAlias}.${filter.column.columnName} = ${filter.valueOrColumnSelector.tableAlias}.${filter.valueOrColumnSelector.columnName}`;
-                            }
-                            else {
-                                return `${filter.column.tableAlias}.${filter.column.columnName} = ${utils_1.sanitizeValue(filter.valueOrColumnSelector)}`;
-                            }
-                        });
+                        const filters = this.filters.map(filter => `${utils_1.columnToString(filter.column)} = ${utils_1.sanitizeValue(filter.valueOrColumn)}`);
                         sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
                     }
                     if (this.groupByColumns.length) {
-                        const groupByColumns = this.groupByColumns.map(groupBy => `${groupBy.column.tableAlias}.${groupBy.column.columnName}`);
+                        const groupByColumns = this.groupByColumns.map(groupBy => utils_1.columnToString(groupBy.column));
                         sql = `${sql}\n\tGROUP BY ${groupByColumns.join(" ,")}`;
                     }
                     if (this.orderByColumns.length) {
-                        const orderByColumns = this.orderByColumns.map(orderBy => `${orderBy.column.tableAlias}.${orderBy.column.columnName}`);
+                        const orderByColumns = this.orderByColumns.map(orderBy => utils_1.columnToString(orderBy.column));
                         sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
                     }
                     if (this.limitTo !== undefined) {
                         sql = `${sql}\n\tLIMIT ${this.limitTo}`;
                     }
-                    console.log(sql);
                     return sql;
                 }
                 async execute(databaseProvider) {
