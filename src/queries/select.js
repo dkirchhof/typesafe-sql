@@ -2,11 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
+function isColumn(column) {
+    return column.dataType !== undefined;
+}
 function from(table1, alias1, table2, alias2) {
     return new class {
         constructor(tablesAndAliases) {
             this.filters = [];
-            this.joinFilters = [];
             this.groupByColumns = [];
             this.orderByColumns = [];
             this.sources = this.createSources(tablesAndAliases);
@@ -36,15 +38,16 @@ function from(table1, alias1, table2, alias2) {
             this.sources.find(source => source.tableAlias === column.tableAlias).columns[column.columnName].aggregation = aggregationType;
             return this;
         }
-        where(columnSelector, value) {
+        where(columnSelector, valueOrColumnSelector) {
             const column = columnSelector(this.record);
-            this.filters.push({ column, value });
-            return this;
-        }
-        joinOn(columnSelector1, columnSelector2) {
-            const column1 = columnSelector1(this.record);
-            const column2 = columnSelector2(this.record);
-            this.joinFilters.push({ column1, column2 });
+            if (typeof valueOrColumnSelector === "function") {
+                const column2 = valueOrColumnSelector(this.record);
+                console.log(column2, column2 instanceof IExtendedColumnOptions, typeof column2);
+                this.filters.push({ column, valueOrColumnSelector: column2 });
+            }
+            else {
+                this.filters.push({ column, valueOrColumnSelector });
+            }
             return this;
         }
         groupBy(columnSelector) {
@@ -69,10 +72,9 @@ function from(table1, alias1, table2, alias2) {
                 }
             }
             return new class {
-                constructor(sources, filters, joinFilters, groupByColumns, orderByColumns, limitTo) {
+                constructor(sources, filters, groupByColumns, orderByColumns, limitTo) {
                     this.sources = sources;
                     this.filters = filters;
-                    this.joinFilters = joinFilters;
                     this.groupByColumns = groupByColumns;
                     this.orderByColumns = orderByColumns;
                     this.limitTo = limitTo;
@@ -92,10 +94,15 @@ function from(table1, alias1, table2, alias2) {
                     }, []);
                     const tables = this.sources.map(source => `${source.tableName} ${source.tableAlias}`);
                     let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
-                    if (this.filters.length || this.joinFilters.length) {
-                        const joinFilters = this.joinFilters.map(filter => `${filter.column1.tableAlias}.${filter.column1.columnName} = ${filter.column2.tableAlias}.${filter.column2.columnName}`);
-                        const valueFilters = this.filters.map(filter => `${filter.column.tableAlias}.${filter.column.columnName} = ${utils_1.sanitizeValue(filter.value)}`);
-                        const filters = joinFilters.concat(valueFilters);
+                    if (this.filters.length) {
+                        const filters = this.filters.map(filter => {
+                            if (isColumn(filter.valueOrColumnSelector)) {
+                                return `${filter.column.tableAlias}.${filter.column.columnName} = ${filter.valueOrColumnSelector.tableAlias}.${filter.valueOrColumnSelector.columnName}`;
+                            }
+                            else {
+                                return `${filter.column.tableAlias}.${filter.column.columnName} = ${utils_1.sanitizeValue(filter.valueOrColumnSelector)}`;
+                            }
+                        });
                         sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
                     }
                     if (this.groupByColumns.length) {
@@ -109,6 +116,7 @@ function from(table1, alias1, table2, alias2) {
                     if (this.limitTo !== undefined) {
                         sql = `${sql}\n\tLIMIT ${this.limitTo}`;
                     }
+                    console.log(sql);
                     return sql;
                 }
                 async execute(databaseProvider) {
@@ -124,9 +132,8 @@ function from(table1, alias1, table2, alias2) {
                     });
                     return mappedResult;
                 }
-            }(this.sources, this.filters, this.joinFilters, this.groupByColumns, this.orderByColumns, this.limitTo);
+            }(this.sources, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
         }
     }(arguments);
 }
 exports.from = from;
-//# sourceMappingURL=select.js.map

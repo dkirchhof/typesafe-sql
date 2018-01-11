@@ -28,4 +28,3 @@ class Table {
     }
 }
 exports.Table = Table;
-//# sourceMappingURL=Table.js.map

@@ -17,4 +17,3 @@ exports.PERSON = new Table_1.Table("persons", {
     firstname: { dataType: "TEXT" },
     lastname: { dataType: "TEXT" }
 });
-//# sourceMappingURL=tables.js.map

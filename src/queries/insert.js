@@ -17,4 +17,3 @@ class InsertQuery {
     }
 }
 exports.InsertQuery = InsertQuery;
-//# sourceMappingURL=insert.js.map

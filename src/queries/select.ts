@@ -91,7 +91,7 @@ export function from<
 
 			if(typeof valueOrColumnSelector === "function")
 			{
-				const column2 = valueOrColumnSelector(this.record);console.log(column2, column2 instanceof IExtendedColumnOptions, typeof column2);
+				const column2 = valueOrColumnSelector(this.record);
 				this.filters.push({ column, valueOrColumnSelector: column2 });
 			}
 			else

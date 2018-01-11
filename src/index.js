@@ -7,4 +7,3 @@ __export(require("./Table"));
 __export(require("./utils"));
 __export(require("./providers/SQLiteProvider"));
 __export(require("./queries/select"));
-//# sourceMappingURL=index.js.map

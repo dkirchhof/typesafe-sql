@@ -24,4 +24,3 @@ class DeleteQuery {
     }
 }
 exports.DeleteQuery = DeleteQuery;
-//# sourceMappingURL=delete.js.map

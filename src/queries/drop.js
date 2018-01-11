@@ -12,4 +12,3 @@ class DropQuery {
     }
 }
 exports.DropQuery = DropQuery;
-//# sourceMappingURL=drop.js.map

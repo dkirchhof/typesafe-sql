@@ -16,11 +16,11 @@ class CreateQuery {
             if (column.notNull) {
                 string += ` NOT NULL`;
             }
-            if (column.foreign) {
-                const foreignTable = column.foreign.table.tableName;
-                const foreignColumn = column.foreign.column;
-                const onDelete = column.foreign.onDelete || "NO ACTION";
-                const onUpdate = column.foreign.onUpdate || "NO ACTION";
+            if (column.references) {
+                const foreignTable = column.references.table.tableName;
+                const foreignColumn = column.references.column;
+                const onDelete = column.references.onDelete || "NO ACTION";
+                const onUpdate = column.references.onUpdate || "NO ACTION";
                 string += ` REFERENCES ${foreignTable}(${foreignColumn}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
             }
             return string;
@@ -34,4 +34,3 @@ class CreateQuery {
     }
 }
 exports.CreateQuery = CreateQuery;
-//# sourceMappingURL=create.js.map

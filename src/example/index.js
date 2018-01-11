@@ -21,4 +21,3 @@ const sqlite_1 = require("sqlite");
     await tables_1.PERSON.drop().execute(databaseProvider);
     db.close();
 })();
-//# sourceMappingURL=index.js.map

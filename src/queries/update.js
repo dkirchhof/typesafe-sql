@@ -26,4 +26,3 @@ class UpdateQuery {
     }
 }
 exports.UpdateQuery = UpdateQuery;
-//# sourceMappingURL=update.js.map

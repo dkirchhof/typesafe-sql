@@ -12,4 +12,3 @@ class SQLiteProvider {
     }
 }
 exports.SQLiteProvider = SQLiteProvider;
-//# sourceMappingURL=SQLiteProvider.js.map
