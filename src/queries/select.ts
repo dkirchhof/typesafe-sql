@@ -4,6 +4,11 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
 
+function isColumn(column: any): column is IExtendedColumnOptions<any>
+{
+	return (<IExtendedColumnOptions<any>>column).dataType !== undefined;
+}
+
 export function from<
 	Type1, Alias1 extends string, 
 	Type2, Alias2 extends string> (
@@ -17,8 +22,7 @@ export function from<
 	type mappedRecordsPredicate<T> = (tables: mappedRecords) => IExtendedColumnOptions<T>;
 	
 	type Source = { tableName: string; tableAlias: string; columns: ExtendedMappedTable<any> };
-	type Filter = { column: IExtendedColumnOptions<any>; value: any };
-	type JoinFilter = { column1: IExtendedColumnOptions<any>; column2: IExtendedColumnOptions<any> };
+	type Filter = { column: IExtendedColumnOptions<any>; valueOrColumnSelector: any | mappedRecordsPredicate<any> };
 	type GroupBy = { column: IExtendedColumnOptions<any> };
 	type OrderBy = { column: IExtendedColumnOptions<any>; direction: "ASC" | "DESC" };
 
@@ -33,7 +37,6 @@ export function from<
 	{
 		private sources: Source[];
 		private filters: Filter[] = [];
-		private joinFilters: JoinFilter[] = [];
 		private groupByColumns: GroupBy[] = [];
 		private orderByColumns: OrderBy[] = [];
 		private limitTo: number;
@@ -82,20 +85,19 @@ export function from<
 			return this;
 		}
 		
-		where<T>(columnSelector: mappedRecordsPredicate<T>, value: T)
+		where<T>(columnSelector: mappedRecordsPredicate<T>, valueOrColumnSelector: T | mappedRecordsPredicate<T>)
 		{
 			const column = columnSelector(this.record);
-			this.filters.push({ column, value });
 
-			return this;
-		}
-
-		joinOn<T>(columnSelector1: mappedRecordsPredicate<T>, columnSelector2: mappedRecordsPredicate<T>)
-		{
-			const column1 = columnSelector1(this.record);
-			const column2 = columnSelector2(this.record);
-			
-			this.joinFilters.push({ column1, column2 });
+			if(typeof valueOrColumnSelector === "function")
+			{
+				const column2 = valueOrColumnSelector(this.record);console.log(column2, column2 instanceof IExtendedColumnOptions, typeof column2);
+				this.filters.push({ column, valueOrColumnSelector: column2 });
+			}
+			else
+			{
+				this.filters.push({ column, valueOrColumnSelector });
+			}
 
 			return this;
 		}
@@ -137,7 +139,7 @@ export function from<
 			
 			return new class
 			{
-				constructor(private sources: Source[], private filters: Filter[], private joinFilters: JoinFilter[], private groupByColumns: GroupBy[], private orderByColumns: OrderBy[], private limitTo: number) { }
+				constructor(private sources: Source[], private filters: Filter[], private groupByColumns: GroupBy[], private orderByColumns: OrderBy[], private limitTo: number) { }
 				
 				toSQL()
 				{
@@ -163,11 +165,19 @@ export function from<
 
 					let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
 
-					if(this.filters.length || this.joinFilters.length)
-					{
-						const joinFilters = this.joinFilters.map(filter => `${filter.column1.tableAlias}.${filter.column1.columnName} = ${filter.column2.tableAlias}.${filter.column2.columnName}`);
-						const valueFilters = this.filters.map(filter => `${filter.column.tableAlias}.${filter.column.columnName} = ${sanitizeValue(filter.value)}`);
-						const filters = joinFilters.concat(valueFilters);
+					if(this.filters.length)
+					{	
+						const filters = this.filters.map(filter =>
+						{
+							if(isColumn(filter.valueOrColumnSelector))
+							{
+								return `${filter.column.tableAlias}.${filter.column.columnName} = ${filter.valueOrColumnSelector.tableAlias}.${filter.valueOrColumnSelector.columnName}`;
+							}
+							else
+							{
+								return `${filter.column.tableAlias}.${filter.column.columnName} = ${sanitizeValue(filter.valueOrColumnSelector)}`;
+							}
+						});
 
 						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
 					}
@@ -188,6 +198,7 @@ export function from<
 					{
 						sql = `${sql}\n\tLIMIT ${this.limitTo}`;
 					}
+					console.log(sql);
 					
 					return sql;
 				}
@@ -213,7 +224,7 @@ export function from<
 					return mappedResult;
 				}
 				
-			}(this.sources, this.filters, this.joinFilters, this.groupByColumns, this.orderByColumns, this.limitTo);
+			}(this.sources, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
 		}
 
 	}(arguments);
