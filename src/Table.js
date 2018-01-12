@@ -5,6 +5,15 @@ const drop_1 = require("./queries/drop");
 const insert_1 = require("./queries/insert");
 const update_1 = require("./queries/update");
 const delete_1 = require("./queries/delete");
+class ForeignKey {
+    constructor(table, column, onDelete, onUpdate) {
+        this.table = table;
+        this.column = column;
+        this.onDelete = onDelete;
+        this.onUpdate = onUpdate;
+    }
+}
+exports.ForeignKey = ForeignKey;
 class Table {
     constructor(tableName, columns) {
         this.tableName = tableName;

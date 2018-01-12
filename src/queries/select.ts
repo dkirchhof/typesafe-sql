@@ -1,5 +1,5 @@
 import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } from "../Table";
-import { sanitizeValue, isColumn, columnToString } from "../utils";
+import { sanitizeValue, columnToString } from "../utils";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
@@ -31,6 +31,7 @@ export function from<
 	return new class
 	{
 		private sources: Source[];
+		private isDistinct: boolean;
 		private filters: Filter[] = [];
 		private groupByColumns: GroupBy[] = [];
 		private orderByColumns: OrderBy[] = [];
@@ -70,6 +71,13 @@ export function from<
 			sources.forEach(source => tempRecord[source.tableAlias] = source.columns);
 
 			return tempRecord as mappedRecords;
+		}
+
+		distinct()
+		{
+			this.isDistinct = true;
+
+			return this;
 		}
 
 		aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType): this
@@ -140,7 +148,7 @@ export function from<
 			
 			return new class
 			{
-				constructor(private sources: Source[], private filters: Filter[], private groupByColumns: GroupBy[], private orderByColumns: OrderBy[], private limitTo: number) { }
+				constructor(private sources: Source[], private isDistinct: boolean, private filters: Filter[], private groupByColumns: GroupBy[], private orderByColumns: OrderBy[], private limitTo: number) { }
 				
 				toSQL()
 				{
@@ -164,7 +172,7 @@ export function from<
 
 					const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
 
-					let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
+					let sql = `SELECT ${this.isDistinct ? "DISTINCT ": ""}${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
 
 					if(this.filters.length)
 					{	
@@ -213,7 +221,7 @@ export function from<
 					return mappedResult;
 				}
 				
-			}(this.sources, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
+			}(this.sources, this.isDistinct, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
 		}
 
 	}(arguments);

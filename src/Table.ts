@@ -23,18 +23,15 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
 	aggregation?: AggregationType;
 }
 
-export interface ForeignKey<Type>
+export class ForeignKey<Type>
 {
-	table: Table<Type>;
-	readonly column: keyof Type;
-	readonly onDelete?: Action;
-	readonly onUpdate?: Action;
+	constructor(readonly table: Table<Type>, readonly column: keyof Type, readonly onDelete?: Action, readonly onUpdate?: Action) { }
 }
 
 export type MappedTable<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
 export type ExtendedMappedTable<Type> = { [K in keyof Type]: IExtendedColumnOptions<Type[K]> };
 
-export type DataType = "TEXT" | "INT";
+export type DataType = "TEXT" | "INTEGER";
 export type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE"
 export type AggregationType = "COUNT" | "SUM" | "AVG";
 

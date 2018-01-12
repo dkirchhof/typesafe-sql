@@ -30,6 +30,10 @@ function from(table1, alias1, table2, alias2) {
             sources.forEach(source => tempRecord[source.tableAlias] = source.columns);
             return tempRecord;
         }
+        distinct() {
+            this.isDistinct = true;
+            return this;
+        }
         aggregate(columnSelector, aggregationType) {
             const column = columnSelector(this.record);
             this.sources.find(source => source.tableAlias === column.tableAlias).columns[column.columnName].aggregation = aggregationType;
@@ -72,8 +76,9 @@ function from(table1, alias1, table2, alias2) {
                 }
             }
             return new class {
-                constructor(sources, filters, groupByColumns, orderByColumns, limitTo) {
+                constructor(sources, isDistinct, filters, groupByColumns, orderByColumns, limitTo) {
                     this.sources = sources;
+                    this.isDistinct = isDistinct;
                     this.filters = filters;
                     this.groupByColumns = groupByColumns;
                     this.orderByColumns = orderByColumns;
@@ -93,7 +98,7 @@ function from(table1, alias1, table2, alias2) {
                         return prev.concat(mappedColumns);
                     }, []);
                     const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
-                    let sql = `SELECT ${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
+                    let sql = `SELECT ${this.isDistinct ? "DISTINCT " : ""}${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
                     if (this.filters.length) {
                         const filters = this.filters.map(filter => `${utils_1.columnToString(filter.column)} = ${utils_1.sanitizeValue(filter.valueOrColumn)}`);
                         sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
@@ -124,7 +129,7 @@ function from(table1, alias1, table2, alias2) {
                     });
                     return mappedResult;
                 }
-            }(this.sources, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
+            }(this.sources, this.isDistinct, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
         }
     }(arguments);
 }
