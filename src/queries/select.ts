@@ -21,13 +21,6 @@ export function from<
 	type GroupBy = { column: IExtendedColumnOptions<any> };
 	type OrderBy = { column: IExtendedColumnOptions<any>; direction: "ASC" | "DESC" };
 
-	type Key1 = keyof Type1;
-	type Key2 = keyof Type2;
-	
-	type PickedRecord1 = Record<Alias1, Pick<Type1, Key1>>;
-	type PickedRecord2 = Record<Alias2, Pick<Type2, Key2>>;
-	type ResultSet = PickedRecord1 & PickedRecord2;
-	
 	return new class
 	{
 		private sources: Source[];
@@ -127,8 +120,12 @@ export function from<
 			return this;
 		}
 
-		select(keys1: Key1[], keys2?: Key2[])
+		select<Key1 extends keyof Type1, Key2 extends keyof Type2>(keys1: Key1[], keys2?: Key2[])
 		{
+			type PickedRecord1 = Record<Alias1, Pick<Type1, Key1>>
+			type PickedRecord2 = Record<Alias1, Pick<Type2, Key2>>
+			type ResultSet = (PickedRecord1 & PickedRecord2)[];
+
 			for(let i = 0; i < arguments.length; i++)
 			{
 				const keys: string[] = arguments[i];
@@ -200,7 +197,7 @@ export function from<
 					return sql;
 				}
 
-				async execute(databaseProvider: IDatabaseProvider): Promise<ResultSet[]>
+				async execute(databaseProvider: IDatabaseProvider): Promise<ResultSet>
 				{
 					const result = await databaseProvider.get(this.toSQL());
 					
