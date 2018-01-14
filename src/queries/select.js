@@ -108,7 +108,7 @@ function from(table1, alias1, table2, alias2) {
                         sql = `${sql}\n\tGROUP BY ${groupByColumns.join(" ,")}`;
                     }
                     if (this.orderByColumns.length) {
-                        const orderByColumns = this.orderByColumns.map(orderBy => utils_1.columnToString(orderBy.column));
+                        const orderByColumns = this.orderByColumns.map(orderBy => `${utils_1.columnToString(orderBy.column)} ${orderBy.direction}`);
                         sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
                     }
                     if (this.limitTo !== undefined) {

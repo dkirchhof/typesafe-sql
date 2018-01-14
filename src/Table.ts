@@ -34,7 +34,7 @@ export type ExtendedMappedTable<Type> = { [K in keyof Type]: IExtendedColumnOpti
 
 export type DataType = "TEXT" | "INTEGER";
 export type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE"
-export type AggregationType = "COUNT" | "SUM" | "AVG";
+export type AggregationType = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX";
 
 export class Table<Type>
 {
