@@ -4,6 +4,7 @@ const tables_1 = require("./tables");
 const select_1 = require("../queries/select");
 const SQLiteProvider_1 = require("../providers/SQLiteProvider");
 const sqlite_1 = require("sqlite");
+const index_1 = require("../index");
 (async () => {
     // let db = await open("testDatabase/db.db");
     let db = await sqlite_1.open(":memory:");
@@ -21,4 +22,8 @@ const sqlite_1 = require("sqlite");
     console.log(await select_1.from(tables_1.PERSON, "person", tables_1.PERSON, "person2").where(t => t.person.id, t => t.person2.id).select([], []).execute(databaseProvider));
     await tables_1.PERSON.drop().execute(databaseProvider);
     db.close();
-})();
+}); //();
+console.log(select_1.from(tables_1.PERSON, "person")
+    .where(t => index_1.wrappedColumn `UPPER(${t.person.firstname})`, "DANIEL")
+    .select(["id", "firstname", "lastname"])
+    .toSQL());

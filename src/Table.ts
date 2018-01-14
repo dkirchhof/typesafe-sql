@@ -21,6 +21,7 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
 	tableAlias?: string;
 	selected?: boolean;
 	aggregation?: AggregationType;
+	wrappedBy?: string[];
 }
 
 export class ForeignKey<Type>

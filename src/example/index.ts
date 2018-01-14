@@ -2,6 +2,7 @@ import { BLOG, PERSON, POST } from "./tables";
 import { from } from "../queries/select";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { open } from "sqlite"
+import { wrappedColumn } from "../index";
 
 (async () =>
 {
@@ -29,4 +30,13 @@ import { open } from "sqlite"
 	await PERSON.drop().execute(databaseProvider);
 
 	db.close();
-})();
+})//();
+
+
+
+console.log(
+	from(PERSON, "person")
+		.where(t => wrappedColumn`UPPER(${t.person.firstname})`, "DANIEL")
+		.select(["id", "firstname", "lastname"])
+		.toSQL()
+);
