@@ -185,7 +185,7 @@ export function from<
 					
 					if(this.orderByColumns.length)
 					{
-						const orderByColumns = this.orderByColumns.map(orderBy => columnToString(orderBy.column));
+						const orderByColumns = this.orderByColumns.map(orderBy => `${columnToString(orderBy.column)} ${orderBy.direction}`);
 						sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
 					}
 
