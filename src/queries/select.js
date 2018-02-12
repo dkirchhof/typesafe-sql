@@ -39,13 +39,13 @@ function from(table1, alias1, table2, alias2) {
             this.sources.find(source => source.tableAlias === column.tableAlias).columns[column.columnName].aggregation = aggregationType;
             return this;
         }
-        where(columnSelector, valueOrColumnSelector) {
+        where(columnSelector, valueOrColumnSelector, operator = "=") {
             const column = columnSelector(this.record);
             if (typeof valueOrColumnSelector === "function") {
-                this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record) });
+                this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record), operator });
             }
             else {
-                this.filters.push({ column, valueOrColumn: valueOrColumnSelector });
+                this.filters.push({ column, valueOrColumn: valueOrColumnSelector, operator });
             }
             return this;
         }
@@ -100,7 +100,7 @@ function from(table1, alias1, table2, alias2) {
                     const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
                     let sql = `SELECT ${this.isDistinct ? "DISTINCT " : ""}${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
                     if (this.filters.length) {
-                        const filters = this.filters.map(filter => `${utils_1.columnToString(filter.column)} = ${utils_1.sanitizeValue(filter.valueOrColumn)}`);
+                        const filters = this.filters.map(filter => `${utils_1.columnToString(filter.column)} ${filter.operator} ${utils_1.sanitizeValue(filter.valueOrColumn)}`);
                         sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
                     }
                     if (this.groupByColumns.length) {

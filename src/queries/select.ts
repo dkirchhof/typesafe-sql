@@ -1,6 +1,7 @@
 import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } from "../Table";
 import { sanitizeValue, columnToString } from "../utils";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
+import { Operator } from "../Operator";
 
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
 
@@ -17,7 +18,7 @@ export function from<
 	type mappedRecordsPredicate<T> = (tables: mappedRecords) => IExtendedColumnOptions<T>;
 	
 	type Source = { tableName: string; tableAlias: string; columns: ExtendedMappedTable<any> };
-	type Filter = { column: IExtendedColumnOptions<any>; valueOrColumn: any | mappedRecordsPredicate<any> };
+	type Filter = { column: IExtendedColumnOptions<any>; valueOrColumn: any | mappedRecordsPredicate<any>, operator: Operator };
 	type GroupBy = { column: IExtendedColumnOptions<any> };
 	type OrderBy = { column: IExtendedColumnOptions<any>; direction: "ASC" | "DESC" };
 
@@ -81,17 +82,17 @@ export function from<
 			return this;
 		}
 		
-		where<T>(columnSelector: mappedRecordsPredicate<T>, valueOrColumnSelector: T | mappedRecordsPredicate<T>)
+		where<T>(columnSelector: mappedRecordsPredicate<T>, valueOrColumnSelector: T | mappedRecordsPredicate<T>, operator: Operator = "=")
 		{
 			const column = columnSelector(this.record);
 
 			if(typeof valueOrColumnSelector === "function")
 			{
-				this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record) });
+				this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record), operator });
 			}
 			else
 			{
-				this.filters.push({ column, valueOrColumn: valueOrColumnSelector });
+				this.filters.push({ column, valueOrColumn: valueOrColumnSelector, operator });
 			}
 
 			return this;
@@ -173,7 +174,7 @@ export function from<
 
 					if(this.filters.length)
 					{	
-						const filters = this.filters.map(filter => `${columnToString(filter.column)} = ${sanitizeValue(filter.valueOrColumn)}`);
+						const filters = this.filters.map(filter => `${columnToString(filter.column)} ${filter.operator} ${sanitizeValue(filter.valueOrColumn)}`);
 						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
 					}
 

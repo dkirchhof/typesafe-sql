@@ -6,8 +6,8 @@ class DeleteQuery {
         this.table = table;
         this.filters = [];
     }
-    where(column, value) {
-        this.filters.push({ column, value });
+    where(column, value, operator = "=") {
+        this.filters.push({ column, value, operator });
         return this;
     }
     async execute(databaseProvider) {
@@ -17,7 +17,7 @@ class DeleteQuery {
     toSQL() {
         let sql = `DELETE FROM ${this.table.tableName}`;
         if (this.filters.length) {
-            const filters = this.filters.map(filter => `${filter.column} = ${utils_1.sanitizeValue(filter.value)}`).join(" AND ");
+            const filters = this.filters.map(filter => `${filter.column} ${filter.operator} ${utils_1.sanitizeValue(filter.value)}`).join(" AND ");
             sql = `${sql} WHERE ${filters}`;
         }
         return sql;
