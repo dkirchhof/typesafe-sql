@@ -64,7 +64,7 @@ function from(table1, alias1, table2, alias2) {
             return this;
         }
         select(keys1, keys2) {
-            for (let i = 0; i < arguments.length; i++) {
+            for (let i = 0; i < this.sources.length; i++) {
                 const keys = arguments[i];
                 if (!keys) {
                     Object.values(this.sources[i].columns).forEach(column => column.selected = true);

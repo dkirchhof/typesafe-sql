@@ -127,7 +127,7 @@ export function from<
 			type PickedRecord2 = Record<Alias2, Pick<Type2, Key2>>
 			type ResultSet = (PickedRecord1 & PickedRecord2)[];
 
-			for(let i = 0; i < arguments.length; i++)
+			for(let i = 0; i < this.sources.length; i++)
 			{
 				const keys: string[] = arguments[i];
 				
