@@ -121,17 +121,17 @@ export function from<
 			return this;
 		}
 
-		select<Key1 extends keyof Type1, Key2 extends keyof Type2>(keys1: Key1[], keys2?: Key2[])
+		select<Key1 extends keyof Type1, Key2 extends keyof Type2>(keys1?: Key1[] | null, keys2?: Key2[] | null)
 		{
 			type PickedRecord1 = Record<Alias1, Pick<Type1, Key1>>
-			type PickedRecord2 = Record<Alias1, Pick<Type2, Key2>>
+			type PickedRecord2 = Record<Alias2, Pick<Type2, Key2>>
 			type ResultSet = (PickedRecord1 & PickedRecord2)[];
 
 			for(let i = 0; i < arguments.length; i++)
 			{
 				const keys: string[] = arguments[i];
 				
-				if(!keys.length)
+				if(!keys)
 				{
 					Object.values(this.sources[i].columns).forEach(column => column.selected = true);
 				}
