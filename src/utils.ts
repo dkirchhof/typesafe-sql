@@ -6,10 +6,6 @@ export function sanitizeValue(value: any): string | null
 	{
 		return `"${value}"`;
 	}
-	else if(value instanceof Date)
-	{
-		return `"${value.toISOString()}"`;
-	}
 	else if(isColumn(value))
 	{
 		return columnToString(value);
