@@ -4,9 +4,6 @@ function sanitizeValue(value) {
     if (typeof value === "string") {
         return `"${value}"`;
     }
-    else if (value instanceof Date) {
-        return `"${value.toISOString()}"`;
-    }
     else if (isColumn(value)) {
         return columnToString(value);
     }

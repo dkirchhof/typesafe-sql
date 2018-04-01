@@ -19,10 +19,10 @@ class DeleteQuery {
         let sql = `DELETE FROM ${this.table.tableName}`;
         if (this.filters.length) {
             const filters = this.filters.map(filter => {
-                const columnName = filter.column;
-                const convertedValue = __1.convertValue(filter.column, filter.value);
+                const sourceColumn = this.table.columns[filter.column];
+                const convertedValue = __1.convertValue(sourceColumn, filter.value);
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
-                return `${columnName} ${filter.operator} ${sanitizedValue}`;
+                return `${filter.column} ${filter.operator} ${sanitizedValue}`;
             }).join(" AND ");
             sql = `${sql} WHERE ${filters}`;
         }

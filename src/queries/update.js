@@ -26,10 +26,9 @@ class UpdateQuery {
         let sql = `UPDATE ${this.table.tableName} SET ${values}`;
         if (this.filters.length) {
             const filters = this.filters.map(filter => {
-                const columnName = __1.columnToString(filter.column);
                 const convertedValue = __1.convertValue(filter.column, filter.value);
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
-                return `${columnName} ${filter.operator} ${sanitizedValue}`;
+                return `${filter.column} ${filter.operator} ${sanitizedValue}`;
             }).join(" AND ");
             sql = `${sql} WHERE ${filters}`;
         }

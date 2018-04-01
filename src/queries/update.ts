@@ -8,7 +8,7 @@ type Filter<K extends keyof T, T> = { column: K; value: T[K], operator: Operator
 
 export class UpdateQuery<Type>
 {
-	private filters: Filter<any, any>[] = [];
+	private filters: Filter<keyof Type, Type>[] = [];
 
 	constructor(private table: Table<Type>, private values: Partial<Type>) { }
 
@@ -41,7 +41,8 @@ export class UpdateQuery<Type>
 		{
 			const filters = this.filters.map(filter =>
 			{
-				const convertedValue = convertValue(filter.column, filter.value);
+				const sourceColumn = this.table.columns[filter.column];
+				const convertedValue = convertValue(sourceColumn, filter.value);
 				const sanitizedValue = sanitizeValue(convertedValue);
 
 				return `${filter.column} ${filter.operator} ${sanitizedValue}`;
