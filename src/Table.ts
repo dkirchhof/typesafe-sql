@@ -12,6 +12,7 @@ export interface IColumnOptions<Type>
 	notNull?: boolean;
 	unique?: boolean;
 	default?: Type;
+	converter?: IConverter<Type>;
 }
 
 export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
@@ -27,6 +28,12 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
 export class ForeignKey<Type>
 {
 	constructor(readonly table: Table<Type>, readonly column: keyof Type, readonly onDelete?: Action, readonly onUpdate?: Action) { }
+}
+
+export interface IConverter<Type>
+{
+	toJS: (input: any) => Type;
+	toDB: (input: Type) => any;
 }
 
 export type MappedTable<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };

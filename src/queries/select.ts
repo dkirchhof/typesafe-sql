@@ -2,6 +2,7 @@ import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } f
 import { sanitizeValue, columnToString } from "../utils";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Operator } from "../Operator";
+import { isColumn, convertValue } from "..";
 
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
 
@@ -49,7 +50,7 @@ export function from<
 				const alias: string = sources[i+1];
 
 				// copy columns object
-				const columnsCopy: ExtendedMappedTable<any> = JSON.parse(JSON.stringify(table.columns));
+				const columnsCopy: ExtendedMappedTable<any> = Object.assign({}, table.columns);
 				// set tableAlias for each column
 				Object.values(columnsCopy).forEach(column => column.tableAlias = alias);	
 				// return mapped source
@@ -174,7 +175,15 @@ export function from<
 
 					if(this.filters.length)
 					{	
-						const filters = this.filters.map(filter => `${columnToString(filter.column)} ${filter.operator} ${sanitizeValue(filter.valueOrColumn)}`);
+						const filters = this.filters.map(filter =>
+						{
+							const columnName = columnToString(filter.column);
+							const convertedValueOrColumn = convertValue(filter.column, filter.valueOrColumn);
+							const sanitizedValueOrColumn = sanitizeValue(convertedValueOrColumn);
+
+							return `${columnName} ${filter.operator} ${sanitizedValueOrColumn}`;
+						});
+
 						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
 					}
 
@@ -210,7 +219,11 @@ export function from<
 						Object.entries(item).forEach(([key, value]) => 
 						{
 							const [, table, column ] = <string[]>key.match(/(.*)_(.*)/);
-							mappedItem[table][column] = value;
+							const sourceTable = this.sources.find(source => source.tableAlias === table);
+							const sourceColumn = sourceTable!.columns[column];
+							const converter = sourceColumn.converter;
+
+							mappedItem[table][column] = converter ? converter.toJS(value) : value;
 						});
 
 						return mappedItem;

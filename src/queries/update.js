@@ -1,14 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
+const __1 = require("..");
 class UpdateQuery {
     constructor(table, values) {
         this.table = table;
         this.values = values;
         this.filters = [];
     }
-    where(column, value) {
-        this.filters.push({ column, value });
+    where(column, value, operator = "=") {
+        this.filters.push({ column, value, operator });
         return this;
     }
     async execute(databaseProvider) {
@@ -16,10 +17,20 @@ class UpdateQuery {
         return changes;
     }
     toSQL() {
-        const values = Object.entries(this.values).map(([key, value]) => `${key} = ${utils_1.sanitizeValue(value)}`).join(", ");
+        const values = Object.entries(this.values).map(([column, value]) => {
+            const sourceColumn = this.table.columns[column];
+            const convertedValue = __1.convertValue(sourceColumn, value);
+            const sanitizedValue = utils_1.sanitizeValue(convertedValue);
+            return `${column} = ${sanitizedValue}`;
+        }).join(", ");
         let sql = `UPDATE ${this.table.tableName} SET ${values}`;
         if (this.filters.length) {
-            const filters = this.filters.map(filter => `${filter.column} = ${utils_1.sanitizeValue(filter.value)}`).join(" AND ");
+            const filters = this.filters.map(filter => {
+                const columnName = __1.columnToString(filter.column);
+                const convertedValue = __1.convertValue(filter.column, filter.value);
+                const sanitizedValue = utils_1.sanitizeValue(convertedValue);
+                return `${columnName} ${filter.operator} ${sanitizedValue}`;
+            }).join(" AND ");
             sql = `${sql} WHERE ${filters}`;
         }
         return sql;

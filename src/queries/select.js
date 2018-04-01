@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
+const __1 = require("..");
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
 function from(table1, alias1, table2, alias2) {
     return new class {
@@ -17,7 +18,7 @@ function from(table1, alias1, table2, alias2) {
                 const table = sources[i];
                 const alias = sources[i + 1];
                 // copy columns object
-                const columnsCopy = JSON.parse(JSON.stringify(table.columns));
+                const columnsCopy = Object.assign({}, table.columns);
                 // set tableAlias for each column
                 Object.values(columnsCopy).forEach(column => column.tableAlias = alias);
                 // return mapped source
@@ -100,7 +101,12 @@ function from(table1, alias1, table2, alias2) {
                     const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
                     let sql = `SELECT ${this.isDistinct ? "DISTINCT " : ""}${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
                     if (this.filters.length) {
-                        const filters = this.filters.map(filter => `${utils_1.columnToString(filter.column)} ${filter.operator} ${utils_1.sanitizeValue(filter.valueOrColumn)}`);
+                        const filters = this.filters.map(filter => {
+                            const columnName = utils_1.columnToString(filter.column);
+                            const convertedValueOrColumn = __1.convertValue(filter.column, filter.valueOrColumn);
+                            const sanitizedValueOrColumn = utils_1.sanitizeValue(convertedValueOrColumn);
+                            return `${columnName} ${filter.operator} ${sanitizedValueOrColumn}`;
+                        });
                         sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
                     }
                     if (this.groupByColumns.length) {
@@ -123,7 +129,10 @@ function from(table1, alias1, table2, alias2) {
                         this.sources.forEach(source => mappedItem[source.tableAlias] = {});
                         Object.entries(item).forEach(([key, value]) => {
                             const [, table, column] = key.match(/(.*)_(.*)/);
-                            mappedItem[table][column] = value;
+                            const sourceTable = this.sources.find(source => source.tableAlias === table);
+                            const sourceColumn = sourceTable.columns[column];
+                            const converter = sourceColumn.converter;
+                            mappedItem[table][column] = converter ? converter.toJS(value) : value;
                         });
                         return mappedItem;
                     });

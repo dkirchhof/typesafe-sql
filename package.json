@@ -4,6 +4,7 @@
   "main": "./src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "compile": "tsc",
     "example": "node ./src/example/index.js"
   },
   "author": "",
@@ -11,6 +12,8 @@
   "dependencies": {
     "sqlite": "^2.9.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^2.8.1"
+  },
   "description": ""
 }

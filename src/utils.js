@@ -16,6 +16,13 @@ function sanitizeValue(value) {
     return null;
 }
 exports.sanitizeValue = sanitizeValue;
+function convertValue(column, valueOrColumn) {
+    if (!isColumn(valueOrColumn) && column.converter) {
+        return column.converter.toDB(valueOrColumn);
+    }
+    return valueOrColumn;
+}
+exports.convertValue = convertValue;
 function columnToString(column) {
     const fullName = `${column.tableAlias}.${column.columnName}`;
     if (column.wrappedBy) {

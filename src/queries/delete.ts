@@ -2,6 +2,7 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
 import { Operator } from "../Operator";
+import { columnToString, convertValue } from "..";
 
 type Filter<K extends keyof T, T> = { column: K; value: T[K], operator: Operator };
 
@@ -29,7 +30,14 @@ export class DeleteQuery<Type>
 
 		if(this.filters.length)
 		{
-			const filters = this.filters.map(filter => `${filter.column} ${filter.operator} ${sanitizeValue(filter.value)}`).join(" AND ");
+			const filters = this.filters.map(filter =>
+			{
+				const convertedValue = convertValue(filter.column, filter.value);
+				const sanitizedValue = sanitizeValue(convertedValue);
+
+				return `${filter.column} ${filter.operator} ${sanitizedValue}`;
+			}).join(" AND ");
+			
 			sql = `${sql} WHERE ${filters}`;
 		}
 

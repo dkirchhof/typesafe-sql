@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const utils_1 = require("../utils");
+const __1 = require("..");
 class DeleteQuery {
     constructor(table) {
         this.table = table;
@@ -17,7 +18,12 @@ class DeleteQuery {
     toSQL() {
         let sql = `DELETE FROM ${this.table.tableName}`;
         if (this.filters.length) {
-            const filters = this.filters.map(filter => `${filter.column} ${filter.operator} ${utils_1.sanitizeValue(filter.value)}`).join(" AND ");
+            const filters = this.filters.map(filter => {
+                const columnName = filter.column;
+                const convertedValue = __1.convertValue(filter.column, filter.value);
+                const sanitizedValue = utils_1.sanitizeValue(convertedValue);
+                return `${columnName} ${filter.operator} ${sanitizedValue}`;
+            }).join(" AND ");
             sql = `${sql} WHERE ${filters}`;
         }
         return sql;

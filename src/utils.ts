@@ -22,6 +22,16 @@ export function sanitizeValue(value: any): string | null
 	return null;
 }
 
+export function convertValue(column: IExtendedColumnOptions<any>, valueOrColumn: any)
+{
+	if(!isColumn(valueOrColumn)  && column.converter)
+	{
+		return column.converter.toDB(valueOrColumn);
+	}
+
+	return valueOrColumn;
+}
+
 export function columnToString(column: IExtendedColumnOptions<any>)
 {
 	const fullName = `${column.tableAlias}.${column.columnName}`;

@@ -17,3 +17,10 @@ exports.PERSON = new Table_1.Table("persons", {
     firstname: { dataType: "TEXT" },
     lastname: { dataType: "TEXT" }
 });
+const dateConverter = {
+    toDB: (input) => input.toISOString(),
+    toJS: (input) => new Date(input)
+};
+exports.DATE_TEST = new Table_1.Table("dateTests", {
+    date: { dataType: "TEXT", converter: dateConverter }
+});
