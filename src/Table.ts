@@ -1,4 +1,5 @@
 import { CreateQuery } from "./queries/create";
+import { SelectQuery } from "./queries/simpleSelect";
 import { DropQuery } from "./queries/drop";
 import { InsertQuery } from "./queries/insert";
 import { UpdateQuery } from "./queries/update";
@@ -61,6 +62,16 @@ export class Table<Type>
 	drop()
 	{
 		return new DropQuery(this);
+	}
+
+	select<SelectedColumns extends keyof Type>(...columns: SelectedColumns[])
+	{
+		return new SelectQuery<Type, SelectedColumns>(this, columns);
+	}
+
+	selectAll()
+	{
+		return new SelectQuery<Type, keyof Type>(this, []);
 	}
 
 	insert(values: Type)

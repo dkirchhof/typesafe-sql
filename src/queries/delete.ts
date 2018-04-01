@@ -3,12 +3,11 @@ import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
 import { Operator } from "../Operator";
 import { columnToString, convertValue } from "..";
-
-type Filter<K extends keyof T, T> = { column: K; value: T[K], operator: Operator };
+import { Filter } from "../Filter";
 
 export class DeleteQuery<Type>
 {
-	private filters: Filter<keyof Type, Type>[] = [];
+	private filters: Filter<Type, keyof Type>[] = [];
 
 	constructor(private table: Table<Type>) { }
 

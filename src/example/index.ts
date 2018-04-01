@@ -13,10 +13,10 @@ import { wrappedColumn } from "../index";
 	// enable foreign keys
 	await db.get("PRAGMA foreign_keys = ON");
 
-	// await PERSON.create().execute(databaseProvider);
+	await PERSON.create().execute(databaseProvider);
 
-	// await PERSON.insert({ id: 1, firstname: "Max", lastname: "Mustermann" }).execute(databaseProvider);
-	// await PERSON.insert({ id: 2, firstname: "Erika", lastname: "Mustermann" }).execute(databaseProvider);
+	await PERSON.insert({ id: 1, firstname: "Max", lastname: "Mustermann" }).execute(databaseProvider);
+	await PERSON.insert({ id: 2, firstname: "Erika", lastname: "Mustermann" }).execute(databaseProvider);
 	// // console.log(await from(PERSON, "person").select(["id", "firstname", "lastname"]).execute(databaseProvider));
 
 	// await PERSON.update({ lastname: "Musterfrau" }).where("firstname", "Erika").execute(databaseProvider);
@@ -31,36 +31,53 @@ import { wrappedColumn } from "../index";
 
 
 
-	await DATE_TEST.create().execute(databaseProvider);
+	// await DATE_TEST.create().execute(databaseProvider);
 
-	const date = new Date();
-	await DATE_TEST.insert({ date }).execute(databaseProvider);
+	// const date = new Date();
+	// await DATE_TEST.insert({ date }).execute(databaseProvider);
 
-	console.log(await from(DATE_TEST, "dt")
-		.where(t => t.dt.date, new Date(), ">=")
-		.select()
-		.execute(databaseProvider)
-	);
+	// console.log(await from(DATE_TEST, "dt")
+	// 	.where(t => t.dt.date, new Date(), ">=")
+	// 	.select()
+	// 	.execute(databaseProvider)
+	// );
 
-	console.log(await from(DATE_TEST, "dt")
-		.where(t => t.dt.date, new Date(), "<=")
-		.select()
-		.execute(databaseProvider)
-	);
+	// console.log(await from(DATE_TEST, "dt")
+	// 	.where(t => t.dt.date, new Date(), "<=")
+	// 	.select()
+	// 	.execute(databaseProvider)
+	// );
 
-	await DATE_TEST.delete().where("date", new Date()).execute(databaseProvider);
+	// await DATE_TEST.delete().where("date", new Date()).execute(databaseProvider);
 	
-	console.log(await from(DATE_TEST, "dt")
-		.select()
-		.execute(databaseProvider)
-	);
+	// console.log(await from(DATE_TEST, "dt")
+	// 	.select()
+	// 	.execute(databaseProvider)
+	// );
 
-	await DATE_TEST.delete().where("date", date).execute(databaseProvider);
+	// await DATE_TEST.delete().where("date", date).execute(databaseProvider);
 	
-	console.log(await from(DATE_TEST, "dt")
-		.select()
-		.execute(databaseProvider)
-	);	
+	// console.log(await from(DATE_TEST, "dt")
+	// 	.select()
+	// 	.execute(databaseProvider)
+	// );	
+
+	console.log((await PERSON
+		.selectAll()
+		.where("firstname", "")
+		.groupBy("lastname")
+		.orderBy("id")
+		.limit(10)
+		.toSQL())
+		// .getMany(databaseProvider))
+	);
+	
+	console.log((await PERSON
+		.select("id", "firstname")
+		.where({ column: "firstname", value: "Daniel", operator: "<>" })
+		.toSQL())
+		// .getOne(databaseProvider))
+	);
 
 	db.close();
 })();
@@ -73,3 +90,4 @@ import { wrappedColumn } from "../index";
 // 		.select(["id", "firstname", "lastname"])
 // 		.toSQL()
 // );
+

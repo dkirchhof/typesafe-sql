@@ -3,12 +3,11 @@ import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
 import { convertValue, columnToString } from "..";
 import { Operator } from "../Operator";
-
-type Filter<K extends keyof T, T> = { column: K; value: T[K], operator: Operator  };
+import { Filter } from "../Filter";
 
 export class UpdateQuery<Type>
 {
-	private filters: Filter<keyof Type, Type>[] = [];
+	private filters: Filter<Type, keyof Type>[] = [];
 
 	constructor(private table: Table<Type>, private values: Partial<Type>) { }
 

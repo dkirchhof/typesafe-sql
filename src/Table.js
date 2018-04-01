@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const create_1 = require("./queries/create");
+const simpleSelect_1 = require("./queries/simpleSelect");
 const drop_1 = require("./queries/drop");
 const insert_1 = require("./queries/insert");
 const update_1 = require("./queries/update");
@@ -25,6 +26,12 @@ class Table {
     }
     drop() {
         return new drop_1.DropQuery(this);
+    }
+    select(...columns) {
+        return new simpleSelect_1.SelectQuery(this, columns);
+    }
+    selectAll() {
+        return new simpleSelect_1.SelectQuery(this, []);
     }
     insert(values) {
         return new insert_1.InsertQuery(this, values);
