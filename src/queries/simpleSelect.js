@@ -2,22 +2,21 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const FilterableQuery_1 = require("./FilterableQuery");
 class SelectQuery extends FilterableQuery_1.FilterableQuery {
-    constructor(table, columns) {
+    constructor(table, selectedColumns) {
         super(table);
-        this.columns = columns;
+        this.aggregationColumns = [];
         this.groupByColumns = [];
         this.orderByColumns = [];
+        this.selectedColumns = selectedColumns.map(column => ({ column }));
     }
     distinct() {
         this.isDistinct = true;
         return this;
     }
-    // aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType): this
-    // {
-    // 	const column = columnSelector(this.record);
-    // 	this.sources.find(source => source.tableAlias === column.tableAlias)!.columns[column.columnName!].aggregation = aggregationType;
-    // 	return this;
-    // }
+    wrapColumn(column, wrappedBy) {
+        this.selectedColumns.find(c => c.column === column).wrappedBy = wrappedBy;
+        return this;
+    }
     groupBy(column) {
         this.groupByColumns.push(column);
         return this;
@@ -40,14 +39,20 @@ class SelectQuery extends FilterableQuery_1.FilterableQuery {
         return this.isDistinct ? "DISTINCT " : "";
     }
     columnsToSQL() {
-        return this.columns.length ? this.columns.join(", ") : "*";
+        const map = (column) => {
+            if (column.wrappedBy) {
+                return `${column.wrappedBy[0]}${column.column}${column.wrappedBy[1]} AS ${column.column}`;
+            }
+            return column.column;
+        };
+        return this.selectedColumns.length ? this.selectedColumns.map(map).join(", ") : "*";
     }
     groupByToSQL() {
-        return this.groupByColumns.length ? `GROUP BY ${this.groupByColumns.join(" ,")}` : "";
+        return this.groupByColumns.length ? `GROUP BY ${this.groupByColumns.join(", ")}` : "";
     }
     orderByToSQL() {
         const map = (orderBy) => `${orderBy.column} ${orderBy.direction}`;
-        return this.orderByColumns.length ? `ORDER BY ${this.orderByColumns.map(map).join(" ,")}` : "";
+        return this.orderByColumns.length ? `ORDER BY ${this.orderByColumns.map(map).join(", ")}` : "";
     }
     limitToSQL() {
         return this.limitTo ? `LIMIT ${this.limitTo}` : "";

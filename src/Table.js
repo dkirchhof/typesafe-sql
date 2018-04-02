@@ -27,8 +27,8 @@ class Table {
     drop() {
         return new drop_1.DropQuery(this);
     }
-    select(...columns) {
-        return new simpleSelect_1.SelectQuery(this, columns);
+    select(...selectedColumns) {
+        return new simpleSelect_1.SelectQuery(this, selectedColumns);
     }
     selectAll() {
         return new simpleSelect_1.SelectQuery(this, []);

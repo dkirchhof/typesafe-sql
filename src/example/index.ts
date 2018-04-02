@@ -74,6 +74,7 @@ import { wrappedColumn } from "../index";
 	
 	console.log((await PERSON
 		.select("id", "firstname")
+		.wrapColumn("firstname", ["UPPER(", ")"])
 		.where({ column: "firstname", value: "Daniel", operator: "<>" })
 		.toSQL())
 		// .getOne(databaseProvider))

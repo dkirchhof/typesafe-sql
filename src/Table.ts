@@ -64,9 +64,9 @@ export class Table<Type>
 		return new DropQuery(this);
 	}
 
-	select<SelectedColumns extends keyof Type>(...columns: SelectedColumns[])
+	select<SelectedColumn extends keyof Type>(...selectedColumns: SelectedColumn[])
 	{
-		return new SelectQuery<Type, SelectedColumns>(this, columns);
+		return new SelectQuery<Type, SelectedColumn>(this, selectedColumns);
 	}
 
 	selectAll()

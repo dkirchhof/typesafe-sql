@@ -53,6 +53,7 @@ const sqlite_1 = require("sqlite");
     );
     console.log((await tables_1.PERSON
         .select("id", "firstname")
+        .wrapColumn("firstname", ["UPPER(", ")"])
         .where({ column: "firstname", value: "Daniel", operator: "<>" })
         .toSQL())
     // .getOne(databaseProvider))

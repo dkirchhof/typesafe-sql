@@ -6,18 +6,24 @@ import { Operator } from "../Operator";
 import { Filter } from "../Filter";
 import { FilterableQuery } from "./FilterableQuery";
 
+type ExtendedColumn<SelectedColumn> = { column: SelectedColumn, wrappedBy?: string[] }
+type GroupBy<Type> = keyof Type;
 type OrderBy<Type> = { column: keyof Type; direction: "ASC" | "DESC" }
 
-export class SelectQuery<Type, SelectedColumns extends keyof Type> extends FilterableQuery<Type>
+export class SelectQuery<Type, SelectedColumn extends keyof Type> extends FilterableQuery<Type>
 {   
 	private isDistinct: boolean;
-	private groupByColumns: (keyof Type)[] = [];
+	private selectedColumns: ExtendedColumn<SelectedColumn>[];
+	private aggregationColumns: any = [];
+	private groupByColumns: GroupBy<Type>[] = [];
 	private orderByColumns: OrderBy<Type>[] = [];
 	private limitTo: number;
 
-    constructor(table: Table<Type>, private columns: SelectedColumns[])
+    constructor(table: Table<Type>, selectedColumns: SelectedColumn[])
     { 
-        super(table);
+		super(table);
+		
+		this.selectedColumns = selectedColumns.map(column => ({ column }));
 	}
 	
 	distinct()
@@ -26,13 +32,11 @@ export class SelectQuery<Type, SelectedColumns extends keyof Type> extends Filte
 		return this;
 	}
 
-	// aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType): this
-	// {
-	// 	const column = columnSelector(this.record);
-	// 	this.sources.find(source => source.tableAlias === column.tableAlias)!.columns[column.columnName!].aggregation = aggregationType;
-
-	// 	return this;
-	// }
+	wrapColumn(column: SelectedColumn, wrappedBy: [string, string])
+	{
+		this.selectedColumns.find(c => c.column === column)!.wrappedBy = wrappedBy;
+		return this;
+	}
 
 	groupBy(column: keyof Type)
 	{
@@ -52,12 +56,12 @@ export class SelectQuery<Type, SelectedColumns extends keyof Type> extends Filte
 		return this;
 	}
     
-	async getMany(databaseProvider: IDatabaseProvider): Promise<Pick<Type, SelectedColumns>[]>
+	async getMany(databaseProvider: IDatabaseProvider): Promise<Pick<Type, SelectedColumn>[]>
 	{
 		return databaseProvider.get(this.toSQL());
 	}
 
-	async getOne(databaseProvider: IDatabaseProvider): Promise<Pick<Type, SelectedColumns> | undefined>
+	async getOne(databaseProvider: IDatabaseProvider): Promise<Pick<Type, SelectedColumn> | undefined>
 	{
 		return (await this.getMany(databaseProvider))[0];
 	}
@@ -69,19 +73,29 @@ export class SelectQuery<Type, SelectedColumns extends keyof Type> extends Filte
 
 	private columnsToSQL()
 	{
-		return this.columns.length ? this.columns.join(", ") : "*";
+		const map = (column: ExtendedColumn<SelectedColumn>) => 
+		{
+			if(column.wrappedBy)
+			{
+				return `${column.wrappedBy[0]}${column.column}${column.wrappedBy[1]} AS ${column.column}`; 
+			}
+			
+			return column.column;
+		}
+
+		return this.selectedColumns.length ? this.selectedColumns.map(map).join(", ") : "*";
 	}
 
 	private groupByToSQL()
 	{
-		return this.groupByColumns.length ? `GROUP BY ${this.groupByColumns.join(" ,")}` : "";
+		return this.groupByColumns.length ? `GROUP BY ${this.groupByColumns.join(", ")}` : "";
 	}
 
 	private orderByToSQL()
 	{
 		const map = (orderBy: OrderBy<Type>) => `${orderBy.column} ${orderBy.direction}`;
 
-		return this.orderByColumns.length ? `ORDER BY ${this.orderByColumns.map(map).join(" ,")}` : "";
+		return this.orderByColumns.length ? `ORDER BY ${this.orderByColumns.map(map).join(", ")}` : "";
 	}
 			
 	private limitToSQL()
