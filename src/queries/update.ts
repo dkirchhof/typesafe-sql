@@ -34,7 +34,7 @@ export class UpdateQuery<Type>
 			return `${column} = ${sanitizedValue}`;
 		}).join(", ");
 
-		let sql = `UPDATE ${this.table.tableName} SET ${values}`;
+		let sql = `UPDATE ${this.table.tableName}\n  SET ${values}`;
 
 		if(this.filters.length)
 		{
@@ -47,7 +47,7 @@ export class UpdateQuery<Type>
 				return `${filter.column} ${filter.operator} ${sanitizedValue}`;
 			}).join(" AND ");
 			
-			sql = `${sql} WHERE ${filters}`;
+			sql = `${sql}\n  WHERE ${filters}`;
 		}
 
 		return sql;

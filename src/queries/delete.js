@@ -24,7 +24,7 @@ class DeleteQuery {
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
                 return `${filter.column} ${filter.operator} ${sanitizedValue}`;
             }).join(" AND ");
-            sql = `${sql} WHERE ${filters}`;
+            sql = `${sql}\n  WHERE ${filters}`;
         }
         return sql;
     }

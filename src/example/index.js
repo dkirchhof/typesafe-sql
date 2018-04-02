@@ -76,6 +76,14 @@ const index_1 = require("../index");
         { id: 3, firstname: "BBBB", lastname: "bbbb" }
     ])
         .toSQL());
+    console.log(tables_1.PERSON
+        .update({ firstname: "CCCC" })
+        .where("firstname", "AAAA")
+        .toSQL());
+    console.log(tables_1.PERSON
+        .delete()
+        .where("firstname", "CCCC")
+        .toSQL());
     db.close();
 })();
 // console.log(

@@ -105,6 +105,18 @@ import { wrappedColumn, wrap } from "../index";
 		.toSQL()
 	);
 
+	console.log(PERSON
+		.update({ firstname: "CCCC" })
+		.where("firstname", "AAAA")
+		.toSQL()
+	);
+
+	console.log(PERSON
+		.delete()
+		.where("firstname", "CCCC")
+		.toSQL()
+	);
+
 	db.close();
 })();
 

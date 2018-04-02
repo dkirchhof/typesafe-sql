@@ -23,7 +23,7 @@ class UpdateQuery {
             const sanitizedValue = utils_1.sanitizeValue(convertedValue);
             return `${column} = ${sanitizedValue}`;
         }).join(", ");
-        let sql = `UPDATE ${this.table.tableName} SET ${values}`;
+        let sql = `UPDATE ${this.table.tableName}\n  SET ${values}`;
         if (this.filters.length) {
             const filters = this.filters.map(filter => {
                 const sourceColumn = this.table.columns[filter.column];
@@ -31,7 +31,7 @@ class UpdateQuery {
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
                 return `${filter.column} ${filter.operator} ${sanitizedValue}`;
             }).join(" AND ");
-            sql = `${sql} WHERE ${filters}`;
+            sql = `${sql}\n  WHERE ${filters}`;
         }
         return sql;
     }
