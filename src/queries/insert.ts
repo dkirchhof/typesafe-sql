@@ -5,7 +5,19 @@ import { convertValue } from "..";
 
 export class InsertQuery<Type>
 {
-	constructor(private table: Table<Type>, private values: Type) { }
+	private tuples: Type[];
+
+	constructor(private table: Table<Type>, tuples: Type | Type[])
+	{
+		if(Array.isArray(tuples))
+		{
+			this.tuples = tuples;
+		}
+		else
+		{
+			this.tuples = [tuples];
+		}
+	}
 
 	async execute(databaseProvider: IDatabaseProvider)
 	{
@@ -15,17 +27,23 @@ export class InsertQuery<Type>
 
 	toSQL()
 	{
-		const columns = Object.keys(this.values).join(", ");
+		const columns = Object.keys(this.tuples[0]).join(", ");
 
-		const values = Object.entries(this.values).map(([column, value]) =>
-		{
-			const sourceColumn = this.table.columns[column as keyof Type];
-			const convertedValue = convertValue(sourceColumn, value);
-			const sanitizedValue = sanitizeValue(convertedValue);
+		const tuples = this.tuples.map(tuple =>
+		{	
+			const values = Object.entries(tuple).map(([column, value]) =>
+			{
+				const sourceColumn = this.table.columns[column as keyof Type];
+				const convertedValue = convertValue(sourceColumn, value);
+				const sanitizedValue = sanitizeValue(convertedValue);
+				
+				return sanitizedValue;
+			}).join(", ");
 
-			return sanitizedValue;
+			return `(${values})`;
+
 		}).join(", ");
 
-		return `INSERT INTO ${this.table.tableName}(${columns}) VALUES(${values})`;
+		return `INSERT INTO ${this.table.tableName}(${columns})\n  VALUES${tuples}`;
 	}
 }

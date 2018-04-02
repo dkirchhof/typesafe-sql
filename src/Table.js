@@ -33,8 +33,8 @@ class Table {
     selectAll() {
         return new simpleSelect_1.SelectQuery(this, []);
     }
-    insert(values) {
-        return new insert_1.InsertQuery(this, values);
+    insert(tuples) {
+        return new insert_1.InsertQuery(this, tuples);
     }
     update(values) {
         return new update_1.UpdateQuery(this, values);

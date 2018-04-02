@@ -80,9 +80,9 @@ export class Table<Type>
 		return new SelectQuery<Type, keyof Type>(this, []);
 	}
 
-	insert(values: Type)
+	insert(tuples: Type | Type[])
 	{
-		return new InsertQuery<Type>(this, values);
+		return new InsertQuery<Type>(this, tuples);
 	}
 
 	update(values: Partial<Type>)

@@ -92,6 +92,19 @@ import { wrappedColumn, wrap } from "../index";
 		.toSQL())
 	);
 
+	console.log(PERSON
+		.insert({ id: 1, firstname: "Daniel", lastname: "Kirchhof" })
+		.toSQL()
+	);
+
+	console.log(PERSON
+		.insert([
+			{ id: 2, firstname: "AAAA", lastname: "aaaa" }, 
+			{ id: 3, firstname: "BBBB", lastname: "bbbb" }
+		])
+		.toSQL()
+	);
+
 	db.close();
 })();
 

@@ -67,6 +67,15 @@ const index_1 = require("../index");
         .selectAll()
         .groupBy(index_1.wrap `UPPER(${"firstname"})`)
         .toSQL()));
+    console.log(tables_1.PERSON
+        .insert({ id: 1, firstname: "Daniel", lastname: "Kirchhof" })
+        .toSQL());
+    console.log(tables_1.PERSON
+        .insert([
+        { id: 2, firstname: "AAAA", lastname: "aaaa" },
+        { id: 3, firstname: "BBBB", lastname: "bbbb" }
+    ])
+        .toSQL());
     db.close();
 })();
 // console.log(
