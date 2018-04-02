@@ -1,4 +1,4 @@
-import { IExtendedColumnOptions } from "./Table";
+import { IExtendedColumnOptions, WrappedColumn } from "./Table";
 
 export function sanitizeValue(value: any): string | null
 {
@@ -52,4 +52,9 @@ export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtende
 	const copy = JSON.parse(JSON.stringify(column));
 	copy.wrappedBy = [...strings];
 	return copy;
+}
+
+export function wrap<TableType>(strings: TemplateStringsArray, column: keyof TableType): WrappedColumn<TableType>
+{
+	return { column, wrappedBy: [...strings] };
 }

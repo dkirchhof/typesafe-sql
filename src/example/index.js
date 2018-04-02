@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const tables_1 = require("./tables");
 const SQLiteProvider_1 = require("../providers/SQLiteProvider");
 const sqlite_1 = require("sqlite");
+const index_1 = require("../index");
 (async () => {
     // let db = await open("testDatabase/db.db");
     let db = await sqlite_1.open(":memory:");
@@ -44,7 +45,7 @@ const sqlite_1 = require("sqlite");
     // );	
     console.log((await tables_1.PERSON
         .selectAll()
-        .where("firstname", "")
+        .where("firstname", "=", "Daniel")
         .groupBy("lastname")
         .orderBy("id")
         .limit(10)
@@ -53,11 +54,19 @@ const sqlite_1 = require("sqlite");
     );
     console.log((await tables_1.PERSON
         .select("id", "firstname")
-        .wrapColumn("firstname", ["UPPER(", ")"])
-        .where({ column: "firstname", value: "Daniel", operator: "<>" })
+        .wrapColumn("firstname", "UPPER(", ")")
+        .where("firstname", "<>", "Daniel")
         .toSQL())
     // .getOne(databaseProvider))
     );
+    console.log((await tables_1.PERSON
+        .selectAll()
+        .groupBy("id")
+        .toSQL()));
+    console.log((await tables_1.PERSON
+        .selectAll()
+        .groupBy(index_1.wrap `UPPER(${"firstname"})`)
+        .toSQL()));
     db.close();
 })();
 // console.log(

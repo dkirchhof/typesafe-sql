@@ -1,4 +1,4 @@
-import { Table } from "..";
+import { Table, sanitizeValue, convertValue } from "..";
 import { Filter, ExtendedFilter } from "../Filter";
 import { BaseQuery } from "./BaseQuery";
 import { Operator } from "../Operator";
@@ -7,33 +7,22 @@ export abstract class FilterableQuery<Type> extends BaseQuery<Type>
 {
     protected filters: Required<Filter<Type, keyof Type>>[] = [];
     
-    where<Column extends keyof Type>(column: Column, value: Type[Column]): this;
-    where<Column extends keyof Type>(filter: Filter<Type, Column>): this;
-    where<Column extends keyof Type>(filterOrColumn: Filter<Type, Column> | Column, value?: Type[Column])
+    where<Column extends keyof Type>(column: Column, operator: Operator, value: Type[Column])
 	{
-        if(typeof filterOrColumn === "object")
-        {
-            this.filters.push({ operator: "=", ...filterOrColumn });
-        }
-        else
-        {
-            this.filters.push({ operator: "=", column: filterOrColumn, value: value! })
-        }
-
+        this.filters.push({ column, operator, value });
 		return this;
     }
 
     protected filtersToSQL()
     {
-        if(!this.filters.length)
+        const map = (filter: Required<Filter<Type, keyof Type>>) =>
         {
-            return "";
+            const columnOptions = this.table.columns[filter.column];
+            const value = sanitizeValue(convertValue(columnOptions, filter.value));
+
+            return `${filter.column} ${filter.operator} ${value}`;
         }
 
-        const filters = this.filters
-            .map(filter => `${filter.column} ${filter.operator} ${filter.value}`)
-            .join(" AND ");
-
-        return `WHERE ${filters}`;
+        return this.filters.length ? `WHERE ${this.filters.map(map).join(" AND ")}` : "";
     }
 }

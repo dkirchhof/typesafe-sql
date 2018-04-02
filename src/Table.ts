@@ -26,6 +26,12 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
 	wrappedBy?: string[];
 }
 
+export interface WrappedColumn<Type>
+{
+	column: keyof Type;
+	wrappedBy: string[];
+}
+
 export class ForeignKey<Type>
 {
 	constructor(readonly table: Table<Type>, readonly column: keyof Type, readonly onDelete?: Action, readonly onUpdate?: Action) { }

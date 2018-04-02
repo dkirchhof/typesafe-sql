@@ -2,7 +2,7 @@ import { BLOG, PERSON, POST, DATE_TEST } from "./tables";
 import { from } from "../queries/select";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { open } from "sqlite"
-import { wrappedColumn } from "../index";
+import { wrappedColumn, wrap } from "../index";
 
 (async () =>
 {
@@ -64,7 +64,7 @@ import { wrappedColumn } from "../index";
 
 	console.log((await PERSON
 		.selectAll()
-		.where("firstname", "")
+		.where("firstname", "=", "Daniel")
 		.groupBy("lastname")
 		.orderBy("id")
 		.limit(10)
@@ -74,10 +74,22 @@ import { wrappedColumn } from "../index";
 	
 	console.log((await PERSON
 		.select("id", "firstname")
-		.wrapColumn("firstname", ["UPPER(", ")"])
-		.where({ column: "firstname", value: "Daniel", operator: "<>" })
+		.wrapColumn("firstname", "UPPER(", ")")
+		.where("firstname", "<>", "Daniel")
 		.toSQL())
 		// .getOne(databaseProvider))
+	);
+
+	console.log((await PERSON
+		.selectAll()
+		.groupBy("id")
+		.toSQL())
+	);
+
+	console.log((await PERSON
+		.selectAll()
+		.groupBy(wrap`UPPER(${"firstname"})`)
+		.toSQL())
 	);
 
 	db.close();

@@ -40,3 +40,7 @@ function wrappedColumn(strings, column) {
     return copy;
 }
 exports.wrappedColumn = wrappedColumn;
+function wrap(strings, column) {
+    return { column, wrappedBy: [...strings] };
+}
+exports.wrap = wrap;
