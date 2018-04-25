@@ -11,7 +11,7 @@ export class DeleteQuery<Type>
 
 	constructor(private table: Table<Type>) { }
 
-	where<Key extends keyof Type>(column: Key, value: Type[Key], operator: Operator = "=")
+	where<Key extends keyof Type>(column: Key, operator: Operator, value: Type[Key])
 	{
 		this.filters.push({ column, value, operator });
 		return this;

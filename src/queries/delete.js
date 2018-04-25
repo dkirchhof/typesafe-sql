@@ -7,7 +7,7 @@ class DeleteQuery {
         this.table = table;
         this.filters = [];
     }
-    where(column, value, operator = "=") {
+    where(column, operator, value) {
         this.filters.push({ column, value, operator });
         return this;
     }

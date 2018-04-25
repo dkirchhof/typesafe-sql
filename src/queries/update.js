@@ -8,8 +8,8 @@ class UpdateQuery {
         this.values = values;
         this.filters = [];
     }
-    where(column, value, operator = "=") {
-        this.filters.push({ column, value, operator });
+    where(column, operator, value) {
+        this.filters.push({ column, operator, value });
         return this;
     }
     async execute(databaseProvider) {

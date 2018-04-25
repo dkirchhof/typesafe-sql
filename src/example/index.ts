@@ -107,13 +107,13 @@ import { wrappedColumn, wrap } from "../index";
 
 	console.log(PERSON
 		.update({ firstname: "CCCC" })
-		.where("firstname", "AAAA")
+		.where("firstname", "=", "AAAA")
 		.toSQL()
 	);
 
 	console.log(PERSON
 		.delete()
-		.where("firstname", "CCCC")
+		.where("firstname", "=", "CCCC")
 		.toSQL()
 	);
 

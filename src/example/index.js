@@ -78,11 +78,11 @@ const index_1 = require("../index");
         .toSQL());
     console.log(tables_1.PERSON
         .update({ firstname: "CCCC" })
-        .where("firstname", "AAAA")
+        .where("firstname", "=", "AAAA")
         .toSQL());
     console.log(tables_1.PERSON
         .delete()
-        .where("firstname", "CCCC")
+        .where("firstname", "=", "CCCC")
         .toSQL());
     db.close();
 })();
