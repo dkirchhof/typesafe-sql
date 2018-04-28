@@ -3,7 +3,6 @@ import { Table, AggregationType, WrappedColumn } from "../Table";
 import { sanitizeValue } from "../utils";
 import { convertValue } from "..";
 import { Operator } from "../Operator";
-import { Filter } from "../Filter";
 import { FilterableQuery } from "./FilterableQuery";
 import { Column, OrderByColumn, ProjectionColumn } from "../Column";
 

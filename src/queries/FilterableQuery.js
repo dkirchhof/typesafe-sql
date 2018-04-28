@@ -14,7 +14,14 @@ class FilterableQuery extends BaseQuery_1.BaseQuery {
     filtersToSQL() {
         const map = (filter) => {
             const columnOptions = this.table.columns[filter.column];
-            const value = __1.sanitizeValue(__1.convertValue(columnOptions, filter.value));
+            let value;
+            if (Array.isArray(filter.value)) {
+                const list = filter.value.map(v => __1.sanitizeValue(__1.convertValue(columnOptions, v)));
+                value = `(${list.join(", ")})`;
+            }
+            else {
+                value = __1.sanitizeValue(__1.convertValue(columnOptions, filter.value));
+            }
             return `${filter.column} ${filter.operator} ${value}`;
         };
         return this.filters.length ? `WHERE ${this.filters.map(map).join(" AND ")}` : "";

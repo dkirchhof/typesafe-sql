@@ -1,1 +1,1 @@
-export type Operator = "=" | ">" | "<" | ">=" | "<=" | "<>";
+export type Operator = "=" | ">" | "<" | ">=" | "<=" | "<>" | "IN" | "NOT IN";
