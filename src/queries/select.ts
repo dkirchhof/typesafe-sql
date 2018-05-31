@@ -1,239 +1,191 @@
-import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } from "../Table";
-import { sanitizeValue, columnToString } from "../utils";
-import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { Operator } from "../Operator";
-import { isColumn, convertValue } from "..";
+import { Column, OrderByColumn, ProjectionColumn } from "../Column";
+import { IColumnOptions, Table, WrappedColumn } from "../Table";
+import { isColumn, isWrappedColum } from "../utils";
 
-// waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
+type MappedRecord<RecordType> = {
+    [Key in keyof RecordType] : {
+        [SubKey in keyof RecordType[Key]]: IColumnOptions<any>;
+    };
+};
 
-export function from<
-	Type1, Alias1 extends string, 
-	Type2, Alias2 extends string> (
-	table1: Table<Type1>, alias1: Alias1,
-	table2?: Table<Type2>, alias2?: Alias2)
-{
-	type mappedRecord1 = Record<Alias1, ExtendedMappedTable<Type1>>;
-	type mappedRecord2 = Record<Alias2, ExtendedMappedTable<Type2>>;
-	type mappedRecords = mappedRecord1 & mappedRecord2;
+type ColumnSelector<RecordType> = (record: MappedRecord<RecordType>) => IColumnOptions<any>;
 
-	type mappedRecordsPredicate<T> = (tables: mappedRecords) => IExtendedColumnOptions<T>;
-	
-	type Source = { tableName: string; tableAlias: string; columns: ExtendedMappedTable<any> };
-	type Filter = { column: IExtendedColumnOptions<any>; valueOrColumn: any | mappedRecordsPredicate<any>, operator: Operator };
-	type GroupBy = { column: IExtendedColumnOptions<any> };
-	type OrderBy = { column: IExtendedColumnOptions<any>; direction: "ASC" | "DESC" };
+class Source {
+    constructor(private table: Table<any>, private alias: string) { }
 
-	return new class
-	{
-		private sources: Source[];
-		private isDistinct: boolean;
-		private filters: Filter[] = [];
-		private groupByColumns: GroupBy[] = [];
-		private orderByColumns: OrderBy[] = [];
-		private limitTo: number;
-
-		private record: mappedRecords;
-
-		constructor(tablesAndAliases: IArguments)//: { table: Table<any>, alias: string }[])
-		{			
-			this.sources = this.createSources(tablesAndAliases);
-			this.record = this.createRecord(this.sources);			
-		}
-
-		private createSources(sources: IArguments)
-		{
-			let tempSources: Source[] = [];
-
-			for(let i = 0; i < sources.length; i+=2)
-			{
-				const table: Table<any> = sources[i];
-				const alias: string = sources[i+1];
-
-				// copy columns object
-				const columnsCopy: ExtendedMappedTable<any> = Object.assign({}, table.columns);
-				// set tableAlias for each column
-				Object.values(columnsCopy).forEach(column => column.tableAlias = alias);	
-				// return mapped source
-				tempSources.push({ tableName: table.tableName, tableAlias: alias, columns: columnsCopy });
-			}
-
-			return tempSources;
-		}
-
-		private createRecord(sources: Source[])
-		{
-			const tempRecord: any = { };
-			sources.forEach(source => tempRecord[source.tableAlias] = source.columns);
-
-			return tempRecord as mappedRecords;
-		}
-
-		distinct()
-		{
-			this.isDistinct = true;
-
-			return this;
-		}
-
-		aggregate(columnSelector: mappedRecordsPredicate<any>, aggregationType: AggregationType): this
-		{
-			const column = columnSelector(this.record);
-			this.sources.find(source => source.tableAlias === column.tableAlias)!.columns[column.columnName!].aggregation = aggregationType;
-
-			return this;
-		}
-		
-		where<T>(columnSelector: mappedRecordsPredicate<T>, valueOrColumnSelector: T | mappedRecordsPredicate<T>, operator: Operator = "=")
-		{
-			const column = columnSelector(this.record);
-
-			if(typeof valueOrColumnSelector === "function")
-			{
-				this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record), operator });
-			}
-			else
-			{
-				this.filters.push({ column, valueOrColumn: valueOrColumnSelector, operator });
-			}
-
-			return this;
-		}
-
-		groupBy(columnSelector: mappedRecordsPredicate<any>)
-		{
-			const column = columnSelector(this.record);
-			this.groupByColumns.push({ column });
-
-			return this;
-		}
-
-		orderBy(columnSelector: mappedRecordsPredicate<any>, direction: "ASC" | "DESC" = "ASC")
-		{
-			const column = columnSelector(this.record);
-			this.orderByColumns.push({ column, direction });
-
-			return this;
-		}
-
-		limit(limit: number)
-		{
-			this.limitTo = limit;
-
-			return this;
-		}
-
-		select<Key1 extends keyof Type1, Key2 extends keyof Type2>(keys1?: Key1[] | null, keys2?: Key2[] | null)
-		{
-			type PickedRecord1 = Record<Alias1, Pick<Type1, Key1>>
-			type PickedRecord2 = Record<Alias2, Pick<Type2, Key2>>
-			type ResultSet = (PickedRecord1 & PickedRecord2)[];
-
-			for(let i = 0; i < this.sources.length; i++)
-			{
-				const keys: string[] = arguments[i];
-				
-				if(!keys)
-				{
-					Object.values(this.sources[i].columns).forEach(column => column.selected = true);
-				}
-				else
-				{
-					for(const key of keys)
-					{
-						this.sources[i].columns[key].selected = true;
-					}
-				}
-			}
-			
-			return new class
-			{
-				constructor(private sources: Source[], private isDistinct: boolean, private filters: Filter[], private groupByColumns: GroupBy[], private orderByColumns: OrderBy[], private limitTo: number) { }
-				
-				toSQL()
-				{
-					const columns = this.sources.reduce((prev, current) =>
-					{
-						const mappedColumns = Object.values(current.columns)
-							.filter(column => column.selected)
-							.map(column => 
-							{
-								let computedColumnName = columnToString(column);
-								if(column.aggregation)
-								{
-									computedColumnName = `${column.aggregation}(${computedColumnName})`;
-								}
-
-								return `${computedColumnName} AS ${column.tableAlias}_${column.columnName}`;
-							});
-						
-						return prev.concat(mappedColumns);
-					}, [] as string[]);
-
-					const tables = this.sources.map(source => `${source.tableName} AS ${source.tableAlias}`);
-
-					let sql = `SELECT ${this.isDistinct ? "DISTINCT ": ""}${columns.join(", ")}\n\tFROM ${tables.join(", ")}`;
-
-					if(this.filters.length)
-					{	
-						const filters = this.filters.map(filter =>
-						{
-							const columnName = columnToString(filter.column);
-							const convertedValueOrColumn = convertValue(filter.column, filter.valueOrColumn);
-							const sanitizedValueOrColumn = sanitizeValue(convertedValueOrColumn);
-
-							return `${columnName} ${filter.operator} ${sanitizedValueOrColumn}`;
-						});
-
-						sql = `${sql}\n\tWHERE ${filters.join(" AND ")}`;
-					}
-
-					if(this.groupByColumns.length)
-					{
-						const groupByColumns = this.groupByColumns.map(groupBy => columnToString(groupBy.column));
-						sql = `${sql}\n\tGROUP BY ${groupByColumns.join(" ,")}`;
-					}
-					
-					if(this.orderByColumns.length)
-					{
-						const orderByColumns = this.orderByColumns.map(orderBy => `${columnToString(orderBy.column)} ${orderBy.direction}`);
-						sql = `${sql}\n\tORDER BY ${orderByColumns.join(" ,")}`;
-					}
-
-					if(this.limitTo !== undefined)
-					{
-						sql = `${sql}\n\tLIMIT ${this.limitTo}`;
-					}
-					
-					return sql;
-				}
-
-				async execute(databaseProvider: IDatabaseProvider): Promise<ResultSet>
-				{
-					const result = await databaseProvider.get(this.toSQL());
-					
-					const mappedResult = result.map(item =>
-					{
-						const mappedItem: any = {};
-						this.sources.forEach(source => mappedItem[source.tableAlias] = {})
-
-						Object.entries(item).forEach(([key, value]) => 
-						{
-							const [, table, column ] = <string[]>key.match(/(.*)_(.*)/);
-							const sourceTable = this.sources.find(source => source.tableAlias === table);
-							const sourceColumn = sourceTable!.columns[column];
-							const converter = sourceColumn.converter;
-
-							mappedItem[table][column] = converter ? converter.toJS(value) : value;
-						});
-
-						return mappedItem;
-					});
-					
-					return mappedResult;
-				}
-				
-			}(this.sources, this.isDistinct, this.filters, this.groupByColumns, this.orderByColumns, this.limitTo);
-		}
-
-	}(arguments);
+    public toString() {
+        return `${this.table.tableName} AS ${this.alias}`;
+    }
 }
+
+export class SelectQuery<RecordType, ResultType = null> {
+    protected record: any = {}; // MappedRecord<RecordType>;
+    protected resultSetMapper: (record: RecordType) => any;
+
+    protected sources: Source[] = [];
+    protected selectedColumns: ProjectionColumn[] = [];
+    protected isDistinct: boolean;
+    protected groupByColumns: Column[] = [];
+    protected orderByColumns: OrderByColumn[] = [];
+    protected limitTo: number;
+
+    constructor(table: Table<any>, alias: string) {
+        this.addSource(table, alias);
+    }
+
+    public groupBy(selector: ColumnSelector<RecordType>) {
+        const column = selector(this.record);
+        this.groupByColumns.push(new Column(column));
+
+        return this;
+    }
+
+    public orderBy(selector: ColumnSelector<RecordType>, direction: "ASC" | "DESC" = "ASC") {
+        const column = selector(this.record);
+        this.orderByColumns.push(new OrderByColumn(column, direction));
+
+        return this;
+    }
+
+    public limit(limit: number) {
+        this.limitTo = limit;
+        return this;
+    }
+
+    public join<JoinedType, Alias extends string>(table: Table<JoinedType>, alias: Alias) {
+        this.addSource(table, alias);
+        return (this as any) as SelectQuery<RecordType & Record<Alias, JoinedType>>;
+    }
+
+    public select<Type extends object>(mapper: (record: RecordType) => Type) {
+        const resultSetSchema = mapper(this.record);
+
+        this.resultSetMapper = mapper;
+        this.selectedColumns = this.getSelectedColumns(resultSetSchema);
+
+        return new ExecutableSelectQuery<RecordType, ResultType>(
+            this.record,
+            this.resultSetMapper,
+            this.sources,
+            this.selectedColumns,
+            this.isDistinct,
+            this.groupByColumns,
+            this.orderByColumns,
+            this.limitTo,
+        );
+    }
+
+    private addSource(table: Table<any>, alias: string) {
+        this.sources.push(new Source(table, alias));
+        this.record[alias] =
+            Object.entries(table.columns)
+                .reduce((prev, [key, value]) => ({ ...prev, [key]: { ...value, tableAlias: alias } }), { });
+    }
+
+    private getSelectedColumns(resultSetSchema: object, columns: ProjectionColumn[] = [], path = "") {
+
+        Object.entries(resultSetSchema).forEach(([key, value]) => {
+            if (isColumn(value)) {
+                columns.push(new ProjectionColumn(value, `${path}${key}`));
+            } else if (isWrappedColum(value)) {
+                columns.push(new ProjectionColumn(value.column, `${path}${key}`, value.wrappedBy));
+            } else if (typeof value === "object") {
+                this.getSelectedColumns(value, columns, `${path}${key}_`);
+            }
+        });
+
+        return columns;
+    }
+}
+
+class ExecutableSelectQuery<RecordType, ResultType> {
+
+    constructor(
+        private record: any,
+        private resultSetMapper: (record: RecordType) => any,
+        private sources: Source[],
+        private selectedColumns: ProjectionColumn[],
+        private isDistinct: boolean,
+        private groupByColumns: Column[],
+        private orderByColumns: OrderByColumn[],
+        private limitTo: number,
+    ) { }
+
+    public getOne() {
+        const resultSetSchema = this.resultSetMapper(this.record);
+        const result = { min: 1, max: 1384 };
+
+        this.fillResultSet(resultSetSchema, result);
+
+        return resultSetSchema as ResultType;
+    }
+
+    public getMany() {
+        return {} as ResultType[];
+    }
+
+    public toSQL() {
+        const sqlParts: string[] = [
+            `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`,
+            this.sourcesToSQL(),
+            // this.filtersToSQL(),
+            this.groupByToSQL(),
+            this.orderByToSQL(),
+            this.limitToSQL(),
+        ];
+
+        // strip out null, undefined and empty strings
+        // and concat strings with linebreak and some spaces
+        return sqlParts
+            .filter(Boolean)
+            .join("\n  ");
+    }
+
+    private fillResultSet(resultSetSchema: any, result: any) {
+        Object.entries(resultSetSchema).forEach(([key, value]) => {
+            if (isColumn(value) || isWrappedColum(value)) {
+                resultSetSchema[key] = result[key];
+            } else if (typeof value === "object") {
+                this.fillResultSet(value, result);
+            }
+        });
+    }
+
+    // region string methods
+
+    private sourcesToSQL() {
+        return `FROM ${this.sources.join(", ")}`;
+    }
+
+    private distinctToSQL() {
+        return this.isDistinct ? "DISTINCT " : "";
+    }
+
+    private selectedColumnsToSQL() {
+        return this.selectedColumns.join(", ");
+    }
+
+    private groupByToSQL() {
+        return this.groupByColumns.length ? `GROUP BY ${this.groupByColumns.join(", ")}` : "";
+    }
+
+    private orderByToSQL() {
+        return this.orderByColumns.length ? `ORDER BY ${this.orderByColumns.join(", ")}` : "";
+    }
+
+    private limitToSQL() {
+        return this.limitTo ? `LIMIT ${this.limitTo}` : "";
+    }
+
+    // endregion
+}
+
+export function wrap<T>(strings: TemplateStringsArray, column: any): WrappedColumn {
+    return { column, wrappedBy: [strings[0], strings[1]] };
+}
+
+const personTable = new Table<{ id: number; firstname: string; lastname: string; }>("persons", {
+    firstname: { dataType: "TEXT" },
+    id: { dataType: "INTEGER", primary: true },
+    lastname: { dataType: "TEXT" },
+});

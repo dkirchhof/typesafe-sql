@@ -9,17 +9,18 @@ class Column {
         this.wrappedBy = [before, after];
     }
     toString() {
-        if (this.wrappedBy) {
-            return `${this.wrappedBy[0]}${this.column}${this.wrappedBy[1]}`;
-        }
-        return this.column;
+        const name = `${this.column.tableAlias}.${this.column.columnName}`;
+        return this.wrappedBy ? `${this.wrappedBy[0]}${name}${this.wrappedBy[1]}` : name;
     }
 }
 exports.Column = Column;
 class ProjectionColumn extends Column {
+    constructor(column, alias, wrappedBy) {
+        super(column, wrappedBy);
+        this.alias = alias;
+    }
     toString() {
-        const alias = this.wrappedBy ? ` AS ${this.column}` : "";
-        return `${super.toString()}${alias}`;
+        return `${super.toString()} AS ${this.alias}`;
     }
 }
 exports.ProjectionColumn = ProjectionColumn;

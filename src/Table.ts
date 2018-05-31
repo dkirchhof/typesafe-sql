@@ -1,9 +1,9 @@
 import { CreateQuery } from "./queries/create";
-import { SelectQuery } from "./queries/simpleSelect";
 import { DropQuery } from "./queries/drop";
 import { InsertQuery } from "./queries/insert";
 import { UpdateQuery } from "./queries/update";
 import { DeleteQuery } from "./queries/delete";
+import { SelectQuery } from "./queries/select";
 
 export interface IColumnOptions<Type>
 {
@@ -26,10 +26,16 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type>
 	wrappedBy?: string[];
 }
 
-export interface WrappedColumn<Type>
+// export interface WrappedColumn<Type>
+// {
+// 	column: keyof Type;
+// 	wrappedBy: string[];
+// }
+
+export interface WrappedColumn
 {
-	column: keyof Type;
-	wrappedBy: string[];
+	column: IExtendedColumnOptions<any>;
+	wrappedBy: [string, string];
 }
 
 export class ForeignKey<Type>
@@ -70,14 +76,9 @@ export class Table<Type>
 		return new DropQuery(this);
 	}
 
-	select<SelectedColumn extends keyof Type>(...selectedColumns: SelectedColumn[])
+	query()
 	{
-		return new SelectQuery<Type, SelectedColumn>(this, selectedColumns);
-	}
-
-	selectAll()
-	{
-		return new SelectQuery<Type, keyof Type>(this, []);
+        return new SelectQuery<Record<"root", Type>>(this, "root");
 	}
 
 	insert(tuples: Type | Type[])

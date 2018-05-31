@@ -44,17 +44,22 @@ export function columnToString(column: IExtendedColumnOptions<any>)
 
 export function isColumn(column: any): column is IExtendedColumnOptions<any>
 {
-	return (<IExtendedColumnOptions<any>>column).dataType !== undefined;
+	return (column as IExtendedColumnOptions<any>).dataType !== undefined;
 }
 
-export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtendedColumnOptions<T>): IExtendedColumnOptions<T>
+export function isWrappedColum(wrapper: any): wrapper is WrappedColumn
 {
-	const copy = JSON.parse(JSON.stringify(column));
-	copy.wrappedBy = [...strings];
-	return copy;
+	return (wrapper as WrappedColumn).column !== undefined && (wrapper as WrappedColumn).wrappedBy !== undefined;
 }
 
-export function wrap<TableType>(strings: TemplateStringsArray, column: keyof TableType): WrappedColumn<TableType>
-{
-	return { column, wrappedBy: [...strings] };
-}
+// export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtendedColumnOptions<T>): IExtendedColumnOptions<T>
+// {
+// 	const copy = JSON.parse(JSON.stringify(column));
+// 	copy.wrappedBy = [...strings];
+// 	return copy;
+// }
+
+// export function wrap<TableType>(strings: TemplateStringsArray, column: keyof TableType): WrappedColumn<TableType>
+// {
+// 	return { column, wrappedBy: [...strings] };
+// }

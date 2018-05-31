@@ -34,13 +34,17 @@ function isColumn(column) {
     return column.dataType !== undefined;
 }
 exports.isColumn = isColumn;
-function wrappedColumn(strings, column) {
-    const copy = JSON.parse(JSON.stringify(column));
-    copy.wrappedBy = [...strings];
-    return copy;
+function isWrappedColum(wrapper) {
+    return wrapper.column !== undefined && wrapper.wrappedBy !== undefined;
 }
-exports.wrappedColumn = wrappedColumn;
-function wrap(strings, column) {
-    return { column, wrappedBy: [...strings] };
-}
-exports.wrap = wrap;
+exports.isWrappedColum = isWrappedColum;
+// export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtendedColumnOptions<T>): IExtendedColumnOptions<T>
+// {
+// 	const copy = JSON.parse(JSON.stringify(column));
+// 	copy.wrappedBy = [...strings];
+// 	return copy;
+// }
+// export function wrap<TableType>(strings: TemplateStringsArray, column: keyof TableType): WrappedColumn<TableType>
+// {
+// 	return { column, wrappedBy: [...strings] };
+// }

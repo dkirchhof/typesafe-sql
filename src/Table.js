@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const create_1 = require("./queries/create");
-const simpleSelect_1 = require("./queries/simpleSelect");
 const drop_1 = require("./queries/drop");
 const insert_1 = require("./queries/insert");
 const update_1 = require("./queries/update");
 const delete_1 = require("./queries/delete");
+const select_1 = require("./queries/select");
 class ForeignKey {
     constructor(table, column, onDelete, onUpdate) {
         this.table = table;
@@ -27,11 +27,8 @@ class Table {
     drop() {
         return new drop_1.DropQuery(this);
     }
-    select(...selectedColumns) {
-        return new simpleSelect_1.SelectQuery(this, selectedColumns);
-    }
-    selectAll() {
-        return new simpleSelect_1.SelectQuery(this, []);
+    query() {
+        return new select_1.SelectQuery(this, "root");
     }
     insert(tuples) {
         return new insert_1.InsertQuery(this, tuples);
