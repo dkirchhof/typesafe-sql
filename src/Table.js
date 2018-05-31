@@ -1,11 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const create_1 = require("./queries/create");
+const delete_1 = require("./queries/delete");
 const drop_1 = require("./queries/drop");
 const insert_1 = require("./queries/insert");
-const update_1 = require("./queries/update");
-const delete_1 = require("./queries/delete");
 const select_1 = require("./queries/select");
+const update_1 = require("./queries/update");
 class ForeignKey {
     constructor(table, column, onDelete, onUpdate) {
         this.table = table;

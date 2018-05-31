@@ -1,52 +1,44 @@
-import { Table } from "../Table";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
+import { Table } from "../Table";
 
-export class CreateQuery
-{
-	constructor(private readonly table: Table<any>) { }
+export class CreateQuery {
+    constructor(private readonly table: Table<any>) { }
 
-	async execute(databaseProvider: IDatabaseProvider)
-	{
-		return databaseProvider.execute(this.toSQL());
-	}
+    public async execute(databaseProvider: IDatabaseProvider) {
+        return databaseProvider.execute(this.toSQL());
+    }
 
-	toSQL()
-	{
-		const columns = Object.values(this.table.columns).map(column =>
-		{
-			let string = `${column.columnName} ${column.dataType}`;
-			
-			if(column.unique)
-			{
-				string += ` UNIQUE`
-			}
+    public toSQL() {
+        const columns = Object.values(this.table.columns).map(column => {
+            let sql = `${column.columnName} ${column.dataType}`;
 
-			if(column.notNull)
-			{
-				string += ` NOT NULL`;
-			}			
+            if (column.unique) {
+                sql += ` UNIQUE`;
+            }
 
-			if(column.references)
-			{
-				const foreignTable = column.references.table.tableName;
-				const foreignColumn = column.references.column;
-				const onDelete = column.references.onDelete || "NO ACTION";
-				const onUpdate = column.references.onUpdate || "NO ACTION";
+            if (column.notNull) {
+                sql += ` NOT NULL`;
+            }
 
-				string += ` REFERENCES ${foreignTable}(${foreignColumn}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
-			}
+            if (column.references) {
+                const foreignTable = column.references.table.tableName;
+                const foreignColumn = column.references.column;
+                const onDelete = column.references.onDelete || "NO ACTION";
+                const onUpdate = column.references.onUpdate || "NO ACTION";
 
-			return string;
-		});
+                sql += ` REFERENCES ${foreignTable}(${foreignColumn}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
+            }
 
-		let primaryConstraint = "";
-		const primaryColumns = Object.values(this.table.columns).filter(column => column.primary);	
-		if(primaryColumns.length)
-		{
-			primaryConstraint = `,\n\tPRIMARY KEY (${primaryColumns.map(column => column.columnName).join(", ")})`;
-		}
+            return sql;
+        });
 
-		return `CREATE TABLE ${this.table.tableName} (\n\t${columns.join(",\n\t")}${primaryConstraint}\n)`;
-	}
+        let primaryConstraint = "";
+        const primaryColumns = Object.values(this.table.columns).filter(column => column.primary);
+
+        if (primaryColumns.length) {
+            primaryConstraint = `,\n\tPRIMARY KEY (${primaryColumns.map(column => column.columnName).join(", ")})`;
+        }
+
+        return `CREATE TABLE ${this.table.tableName} (\n\t${columns.join(",\n\t")}${primaryConstraint}\n)`;
+    }
 }
-

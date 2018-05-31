@@ -4,10 +4,10 @@ function sanitizeValue(value) {
     if (typeof value === "string") {
         return `"${value}"`;
     }
-    else if (isColumn(value)) {
+    if (isColumn(value)) {
         return columnToString(value);
     }
-    else if (value !== undefined && value !== null) {
+    if (value !== undefined && value !== null) {
         return value.toString();
     }
     return null;

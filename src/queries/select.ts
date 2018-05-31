@@ -1,5 +1,5 @@
 import { Column, OrderByColumn, ProjectionColumn } from "../Column";
-import { IColumnOptions, Table, WrappedColumn } from "../Table";
+import { IColumnOptions, Table, IWrappedColumn } from "../Table";
 import { isColumn, isWrappedColum } from "../utils";
 
 type MappedRecord<RecordType> = {
@@ -180,7 +180,7 @@ class ExecutableSelectQuery<RecordType, ResultType> {
     // endregion
 }
 
-export function wrap<T>(strings: TemplateStringsArray, column: any): WrappedColumn {
+export function wrap<T>(strings: TemplateStringsArray, column: any): IWrappedColumn {
     return { column, wrappedBy: [strings[0], strings[1]] };
 }
 

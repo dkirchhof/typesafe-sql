@@ -9,21 +9,21 @@ class CreateQuery {
     }
     toSQL() {
         const columns = Object.values(this.table.columns).map(column => {
-            let string = `${column.columnName} ${column.dataType}`;
+            let sql = `${column.columnName} ${column.dataType}`;
             if (column.unique) {
-                string += ` UNIQUE`;
+                sql += ` UNIQUE`;
             }
             if (column.notNull) {
-                string += ` NOT NULL`;
+                sql += ` NOT NULL`;
             }
             if (column.references) {
                 const foreignTable = column.references.table.tableName;
                 const foreignColumn = column.references.column;
                 const onDelete = column.references.onDelete || "NO ACTION";
                 const onUpdate = column.references.onUpdate || "NO ACTION";
-                string += ` REFERENCES ${foreignTable}(${foreignColumn}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
+                sql += ` REFERENCES ${foreignTable}(${foreignColumn}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
             }
-            return string;
+            return sql;
         });
         let primaryConstraint = "";
         const primaryColumns = Object.values(this.table.columns).filter(column => column.primary);

@@ -1,7 +1,7 @@
 import { open } from "sqlite";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
-import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
 import { wrap } from "../queries/select";
+import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
 
 // (async () =>
 // {
@@ -117,15 +117,12 @@ import { wrap } from "../queries/select";
 // 	db.close();
 // })//();
 
-
-
 // // console.log(
 // // 	from(PERSON, "person")
 // // 		.where(t => wrappedColumn`UPPER(${t.person.firstname})`, "DANIEL")
 // // 		.select(["id", "firstname", "lastname"])
 // // 		.toSQL()
 // // );
-
 
 // // console.log(
 // // 	JoinTable(PERSON.select("firstname", "lastname"), "author", BLOG.select("name", "content"), "blog")

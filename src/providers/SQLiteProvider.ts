@@ -1,17 +1,14 @@
-import { IDatabaseProvider } from "./IDatabaseProvider";
 import { Database } from "sqlite";
+import { IDatabaseProvider } from "./IDatabaseProvider";
 
-export class SQLiteProvider implements IDatabaseProvider
-{
-	constructor(private db: Database) { }
-	
-	async get(sql: string)
-	{
-		return this.db.all(sql);
-	}
+export class SQLiteProvider implements IDatabaseProvider {
+    constructor(private db: Database) { }
 
-	async execute(sql: string): Promise<any>
-	{
-		return this.db.run(sql);
-	}
+    public async get(sql: string) {
+        return this.db.all(sql);
+    }
+
+    public async execute(sql: string): Promise<any> {
+        return this.db.run(sql);
+    }
 }

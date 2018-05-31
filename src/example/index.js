@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const tables_1 = require("./tables");
 const select_1 = require("../queries/select");
+const tables_1 = require("./tables");
 // (async () =>
 // {
 // 	// let db = await open("testDatabase/db.db");

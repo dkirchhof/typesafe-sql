@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("../utils");
 const __1 = require("..");
+const utils_1 = require("../utils");
 class DeleteQuery {
     constructor(table) {
         this.table = table;
