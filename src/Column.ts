@@ -1,4 +1,5 @@
-import { IExtendedColumnOptions } from ".";
+import { IExtendedColumnOptions, convertValue, sanitizeValue } from ".";
+import { Operator } from "./Operator";
 
 export class Column {
     constructor(public readonly column: IExtendedColumnOptions<any>, protected wrappedBy?: string[]) { }
@@ -21,6 +22,19 @@ export class ProjectionColumn extends Column {
 
     public toString() {
         return `${super.toString()} AS ${this.alias}`;
+    }
+}
+
+export class FilterColumn extends Column {
+    constructor(column: IExtendedColumnOptions<any>, private operator: Operator, private value: any, wrappedBy?: string[]) {
+        super(column, wrappedBy);
+    }
+
+    public toString() {
+        const convertedValueOrColumn = convertValue(this.column, this.value);
+        const sanitizedValueOrColumn = sanitizeValue(convertedValueOrColumn);
+
+        return `${super.toString()} ${this.operator} ${sanitizedValueOrColumn}`;
     }
 }
 

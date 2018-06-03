@@ -1,14 +1,15 @@
-import { Column, OrderByColumn, ProjectionColumn } from "../Column";
-import { IColumnOptions, Table, IWrappedColumn } from "../Table";
+import { Column, FilterColumn, OrderByColumn, ProjectionColumn } from "../Column";
+import { Operator } from "../Operator";
+import { IColumnOptions, IWrappedColumn, Table } from "../Table";
 import { isColumn, isWrappedColum } from "../utils";
 
 type MappedRecord<RecordType> = {
-    [Key in keyof RecordType] : {
-        [SubKey in keyof RecordType[Key]]: IColumnOptions<any>;
+    [AliasKey in keyof RecordType] : {
+        [ColumnKey in keyof RecordType[AliasKey]]: IColumnOptions<RecordType[AliasKey][ColumnKey]>;
     };
 };
 
-type ColumnSelector<RecordType> = (record: MappedRecord<RecordType>) => IColumnOptions<any>;
+type ColumnSelector<RecordType, ColumnType = any> = (record: MappedRecord<RecordType>) => IColumnOptions<ColumnType> | IWrappedColumn<ColumnType>;
 
 class Source {
     constructor(private table: Table<any>, private alias: string) { }
@@ -24,25 +25,54 @@ export class SelectQuery<RecordType, ResultType = null> {
 
     protected sources: Source[] = [];
     protected selectedColumns: ProjectionColumn[] = [];
-    protected isDistinct: boolean;
+    protected filterColumns: FilterColumn[] = [];
     protected groupByColumns: Column[] = [];
     protected orderByColumns: OrderByColumn[] = [];
+    protected isDistinct: boolean;
     protected limitTo: number;
 
     constructor(table: Table<any>, alias: string) {
         this.addSource(table, alias);
     }
 
+    public where<ColumnType>(selector: ColumnSelector<RecordType, ColumnType>, operator: Operator = "=", valueOrColumnSelector: ColumnType /*| mappedRecordsPredicate<T>*/) {
+        const column = selector(this.record);
+
+        if (isColumn(column)) {
+            this.filterColumns.push(new FilterColumn(column, operator, valueOrColumnSelector));
+        } else if (isWrappedColum(column)) {
+            this.filterColumns.push(new FilterColumn(column.column, operator, valueOrColumnSelector, column.wrappedBy));
+        }
+
+        // if (typeof valueOrColumnSelector === "function") {
+        //     this.filters.push({ column, valueOrColumn: valueOrColumnSelector(this.record), operator });
+        // } else {
+        // this.filters.push({ column, operator, valueOrColumn: valueOrColumnSelector });
+        // }
+
+        return this;
+    }
+
     public groupBy(selector: ColumnSelector<RecordType>) {
         const column = selector(this.record);
-        this.groupByColumns.push(new Column(column));
+
+        if (isColumn(column)) {
+            this.groupByColumns.push(new Column(column));
+        } else if (isWrappedColum(column)) {
+            this.groupByColumns.push(new Column(column.column, column.wrappedBy));
+        }
 
         return this;
     }
 
     public orderBy(selector: ColumnSelector<RecordType>, direction: "ASC" | "DESC" = "ASC") {
         const column = selector(this.record);
-        this.orderByColumns.push(new OrderByColumn(column, direction));
+
+        if (isColumn(column)) {
+            this.orderByColumns.push(new OrderByColumn(column, direction));
+        } else if (isWrappedColum(column)) {
+            this.orderByColumns.push(new OrderByColumn(column.column, direction, column.wrappedBy));
+        }
 
         return this;
     }
@@ -57,7 +87,7 @@ export class SelectQuery<RecordType, ResultType = null> {
         return (this as any) as SelectQuery<RecordType & Record<Alias, JoinedType>>;
     }
 
-    public select<Type extends object>(mapper: (record: RecordType) => Type) {
+    public select<Type>(mapper: (record: RecordType) => Type) {
         const resultSetSchema = mapper(this.record);
 
         this.resultSetMapper = mapper;
@@ -68,11 +98,17 @@ export class SelectQuery<RecordType, ResultType = null> {
             this.resultSetMapper,
             this.sources,
             this.selectedColumns,
-            this.isDistinct,
+            this.filterColumns,
             this.groupByColumns,
             this.orderByColumns,
+            this.isDistinct,
             this.limitTo,
         );
+    }
+
+    public selectAll() {
+        // to select all, the mapper just takes the record and returns it, as it is
+        return this.select(r => r);
     }
 
     private addSource(table: Table<any>, alias: string) {
@@ -82,7 +118,7 @@ export class SelectQuery<RecordType, ResultType = null> {
                 .reduce((prev, [key, value]) => ({ ...prev, [key]: { ...value, tableAlias: alias } }), { });
     }
 
-    private getSelectedColumns(resultSetSchema: object, columns: ProjectionColumn[] = [], path = "") {
+    private getSelectedColumns(resultSetSchema: any, columns: ProjectionColumn[] = [], path = "") {
 
         Object.entries(resultSetSchema).forEach(([key, value]) => {
             if (isColumn(value)) {
@@ -105,9 +141,10 @@ class ExecutableSelectQuery<RecordType, ResultType> {
         private resultSetMapper: (record: RecordType) => any,
         private sources: Source[],
         private selectedColumns: ProjectionColumn[],
-        private isDistinct: boolean,
+        private filterColumns: FilterColumn[],
         private groupByColumns: Column[],
         private orderByColumns: OrderByColumn[],
+        private isDistinct: boolean,
         private limitTo: number,
     ) { }
 
@@ -128,7 +165,7 @@ class ExecutableSelectQuery<RecordType, ResultType> {
         const sqlParts: string[] = [
             `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`,
             this.sourcesToSQL(),
-            // this.filtersToSQL(),
+            this.filtersToSQL(),
             this.groupByToSQL(),
             this.orderByToSQL(),
             this.limitToSQL(),
@@ -165,6 +202,10 @@ class ExecutableSelectQuery<RecordType, ResultType> {
         return this.selectedColumns.join(", ");
     }
 
+    private filtersToSQL() {
+        return this.filterColumns.length ? `WHERE ${this.filterColumns.join(" AND ")}` : "";
+    }
+
     private groupByToSQL() {
         return this.groupByColumns.length ? `GROUP BY ${this.groupByColumns.join(", ")}` : "";
     }
@@ -180,12 +221,6 @@ class ExecutableSelectQuery<RecordType, ResultType> {
     // endregion
 }
 
-export function wrap<T>(strings: TemplateStringsArray, column: any): IWrappedColumn {
+export function wrap<T>(strings: TemplateStringsArray, column: any): IWrappedColumn<T> {
     return { column, wrappedBy: [strings[0], strings[1]] };
 }
-
-const personTable = new Table<{ id: number; firstname: string; lastname: string; }>("persons", {
-    firstname: { dataType: "TEXT" },
-    id: { dataType: "INTEGER", primary: true },
-    lastname: { dataType: "TEXT" },
-});

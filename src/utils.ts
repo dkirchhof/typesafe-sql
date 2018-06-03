@@ -38,8 +38,8 @@ export function isColumn(column: any): column is IExtendedColumnOptions<any> {
     return (column as IExtendedColumnOptions<any>).dataType !== undefined;
 }
 
-export function isWrappedColum(wrapper: any): wrapper is IWrappedColumn {
-    return (wrapper as IWrappedColumn).column !== undefined && (wrapper as IWrappedColumn).wrappedBy !== undefined;
+export function isWrappedColum(wrapper: any): wrapper is IWrappedColumn<any> {
+    return (wrapper as IWrappedColumn<any>).column !== undefined && (wrapper as IWrappedColumn<any>).wrappedBy !== undefined;
 }
 
 // export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtendedColumnOptions<T>): IExtendedColumnOptions<T>

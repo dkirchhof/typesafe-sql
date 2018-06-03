@@ -30,8 +30,8 @@ export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type> {
 // 	wrappedBy: string[];
 // }
 
-export interface IWrappedColumn {
-    column: IExtendedColumnOptions<any>;
+export interface IWrappedColumn<ColumnType> {
+    column: IExtendedColumnOptions<ColumnType>;
     wrappedBy: [string, string];
 }
 
