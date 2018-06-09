@@ -255,7 +255,3 @@ class ExecutableSelectQuery<RecordType, ResultType> {
 
     // endregion
 }
-
-export function wrap<T>(strings: TemplateStringsArray, column: any): IWrappedColumn<T> {
-    return { column, wrappedBy: [strings[0], strings[1]] };
-}

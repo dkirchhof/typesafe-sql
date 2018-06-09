@@ -1,6 +1,6 @@
 import { open } from "sqlite";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
-import { wrap } from "../queries/select";
+import { CF, MAX, MIN } from "../SQLFunctions";
 import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
 
 (async () => {
@@ -70,7 +70,7 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
     console.log(PERSON
         .query()
         .where(r => r.root.firstname, "<>", "Daniel")
-        .select(r => ({ id: r.root.id, FIRSTNAME: wrap`UPPER(${r.root.firstname})` }))
+        .select(r => ({ id: r.root.id, FIRSTNAME: CF`UPPER(${r.root.firstname})` }))
         .toSQL());
 
     console.log(PERSON
@@ -81,7 +81,7 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
 
     console.log(PERSON
         .query()
-        .groupBy(r => wrap`UPPER(${r.root.lastname})`)
+        .groupBy(r => CF`UPPER(${r.root.lastname})`)
         .selectAll()
         .toSQL());
 
@@ -92,7 +92,7 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
     console.log(PERSON
         .insert([
             { id: 2, firstname: "AAAA", lastname: "aaaa" },
-            { id: 3, firstname: "BBBB", lastname: "bbbb" }
+            { id: 3, firstname: "BBBB", lastname: "bbbb" },
         ])
         .toSQL());
 
@@ -115,7 +115,7 @@ const joinedQuery = PERSON
     .where(r => r.mother.firstname, "=", "daniel")
     .groupBy(r => r.mother.lastname)
     .orderBy(r => r.root.firstname)
-    .select(r => ({ min: wrap`MIN(${r.root.id})`, max: r.root.id }));
+    .select(r => ({ name: r.root.firstname, min: MIN(r.root.id), max: MAX(r.root.id) }));
 
 console.log(joinedQuery.toSQL());
 // console.log(query.getOne());

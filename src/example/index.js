@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const sqlite_1 = require("sqlite");
 const SQLiteProvider_1 = require("../providers/SQLiteProvider");
-const select_1 = require("../queries/select");
+const SQLFunctions_1 = require("../SQLFunctions");
 const tables_1 = require("./tables");
 (async () => {
     // const db = await open("testDatabase/db.db");
@@ -54,7 +54,7 @@ const tables_1 = require("./tables");
     console.log(tables_1.PERSON
         .query()
         .where(r => r.root.firstname, "<>", "Daniel")
-        .select(r => ({ id: r.root.id, FIRSTNAME: select_1.wrap `UPPER(${r.root.firstname})` }))
+        .select(r => ({ id: r.root.id, FIRSTNAME: SQLFunctions_1.CF `UPPER(${r.root.firstname})` }))
         .toSQL());
     console.log(tables_1.PERSON
         .query()
@@ -63,7 +63,7 @@ const tables_1 = require("./tables");
         .toSQL());
     console.log(tables_1.PERSON
         .query()
-        .groupBy(r => select_1.wrap `UPPER(${r.root.lastname})`)
+        .groupBy(r => SQLFunctions_1.CF `UPPER(${r.root.lastname})`)
         .selectAll()
         .toSQL());
     console.log(tables_1.PERSON
@@ -72,7 +72,7 @@ const tables_1 = require("./tables");
     console.log(tables_1.PERSON
         .insert([
         { id: 2, firstname: "AAAA", lastname: "aaaa" },
-        { id: 3, firstname: "BBBB", lastname: "bbbb" }
+        { id: 3, firstname: "BBBB", lastname: "bbbb" },
     ])
         .toSQL());
     console.log(tables_1.PERSON
@@ -91,6 +91,6 @@ const joinedQuery = tables_1.PERSON
     .where(r => r.mother.firstname, "=", "daniel")
     .groupBy(r => r.mother.lastname)
     .orderBy(r => r.root.firstname)
-    .select(r => ({ min: select_1.wrap `MIN(${r.root.id})`, max: r.root.id }));
+    .select(r => ({ name: r.root.firstname, min: SQLFunctions_1.MIN(r.root.id), max: SQLFunctions_1.MAX(r.root.id) }));
 console.log(joinedQuery.toSQL());
 // console.log(query.getOne());

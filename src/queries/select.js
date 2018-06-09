@@ -197,7 +197,3 @@ class ExecutableSelectQuery {
         return this.limitTo ? `LIMIT ${this.limitTo}` : "";
     }
 }
-function wrap(strings, column) {
-    return { column, wrappedBy: [strings[0], strings[1]] };
-}
-exports.wrap = wrap;
