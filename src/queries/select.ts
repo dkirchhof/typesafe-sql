@@ -19,11 +19,20 @@ class Source {
     }
 }
 
+class Join {
+    constructor(private source: Source, private leftColumn: Column, private operator: Operator, private rightColumn: Column) { }
+
+    public toString() {
+        return `INNER JOIN ${this.source} ON ${this.leftColumn} ${this.operator} ${this.rightColumn}`;
+    }
+}
+
 export class SelectQuery<RecordType, ResultType = null> {
     protected record: any = {}; // MappedRecord<RecordType>;
     protected resultSetMapper: (record: RecordType) => any;
 
-    protected sources: Source[] = [];
+    protected source: Source;
+    protected joins: Join[] = [];
     protected selectedColumns: ProjectionColumn[] = [];
     protected filterColumns: FilterColumn[] = [];
     protected groupByColumns: Column[] = [];
@@ -32,7 +41,8 @@ export class SelectQuery<RecordType, ResultType = null> {
     protected limitTo: number;
 
     constructor(table: Table<any>, alias: string) {
-        this.addSource(table, alias);
+        this.source = new Source(table, alias);
+        this.updateRecord(table, alias);
     }
 
     public where<ColumnType>(selector: ColumnSelector<RecordType, ColumnType>, operator: Operator = "=", valueOrColumnSelector: ColumnType /*| mappedRecordsPredicate<T>*/) {
@@ -82,8 +92,23 @@ export class SelectQuery<RecordType, ResultType = null> {
         return this;
     }
 
-    public join<JoinedType, Alias extends string>(table: Table<JoinedType>, alias: Alias) {
-        this.addSource(table, alias);
+    public join<JoinedType, Alias extends string>(table: Table<JoinedType>, alias: Alias, leftSelector: ColumnSelector<RecordType>, operator: Operator, rightSelector: ColumnSelector<RecordType & Record<Alias, JoinedType>>) {
+        this.updateRecord(table, alias);
+
+        const getColumn = (selector: ColumnSelector<RecordType>) => {
+            const selected = selector(this.record);
+
+            if (isColumn(selected)) {
+                return new Column(selected);
+            } else if (isWrappedColum(selected)) {
+                return new Column(selected.column, selected.wrappedBy);
+            }
+        };
+
+        const leftColumn = getColumn(leftSelector)!;
+        const rightColumn = getColumn(rightSelector)!;
+
+        this.joins.push(new Join(new Source(table, alias), leftColumn, operator, rightColumn));
         return (this as any) as SelectQuery<RecordType & Record<Alias, JoinedType>>;
     }
 
@@ -96,7 +121,8 @@ export class SelectQuery<RecordType, ResultType = null> {
         return new ExecutableSelectQuery<RecordType, ResultType>(
             this.record,
             this.resultSetMapper,
-            this.sources,
+            this.source,
+            this.joins,
             this.selectedColumns,
             this.filterColumns,
             this.groupByColumns,
@@ -111,8 +137,10 @@ export class SelectQuery<RecordType, ResultType = null> {
         return this.select(r => r);
     }
 
-    private addSource(table: Table<any>, alias: string) {
-        this.sources.push(new Source(table, alias));
+    private updateRecord(table: Table<any>, alias: string) {
+        // copy each column of the table
+        // add tableAlias property to the column
+        // add a copy of whole columns object to the record
         this.record[alias] =
             Object.entries(table.columns)
                 .reduce((prev, [key, value]) => ({ ...prev, [key]: { ...value, tableAlias: alias } }), { });
@@ -139,7 +167,8 @@ class ExecutableSelectQuery<RecordType, ResultType> {
     constructor(
         private record: any,
         private resultSetMapper: (record: RecordType) => any,
-        private sources: Source[],
+        private source: Source,
+        private joins: Join[],
         private selectedColumns: ProjectionColumn[],
         private filterColumns: FilterColumn[],
         private groupByColumns: Column[],
@@ -164,7 +193,8 @@ class ExecutableSelectQuery<RecordType, ResultType> {
     public toSQL() {
         const sqlParts: string[] = [
             `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`,
-            this.sourcesToSQL(),
+            this.sourceToSQL(),
+            this.joinsToSQL(),
             this.filtersToSQL(),
             this.groupByToSQL(),
             this.orderByToSQL(),
@@ -190,8 +220,12 @@ class ExecutableSelectQuery<RecordType, ResultType> {
 
     // region string methods
 
-    private sourcesToSQL() {
-        return `FROM ${this.sources.join(", ")}`;
+    private sourceToSQL() {
+        return `FROM ${this.source}`;
+    }
+
+    private joinsToSQL() {
+        return this.joins.join("\n");
     }
 
     private distinctToSQL() {

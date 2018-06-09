@@ -85,18 +85,12 @@ const tables_1 = require("./tables");
         .toSQL());
     db.close();
 })();
-// console.log(
-// 	from(PERSON, "person")
-// 		.where(t => wrappedColumn`UPPER(${t.person.firstname})`, "DANIEL")
-// 		.select(["id", "firstname", "lastname"])
-// 		.toSQL()
-// );
-// const query = PERSON
-//     .query()
-//     .join(PERSON, "mother")
-//     .where(r => r.mother.firstname, "=", "daniel")
-//     .groupBy(r => r.mother.lastname)
-//     .orderBy(r => r.root.firstname)
-//     .select(r => ({ min: wrap`MIN(${r.root.id})`, max: r.root.id }));
-// console.log(query.toSQL());
+const joinedQuery = tables_1.PERSON
+    .query()
+    .join(tables_1.PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
+    .where(r => r.mother.firstname, "=", "daniel")
+    .groupBy(r => r.mother.lastname)
+    .orderBy(r => r.root.firstname)
+    .select(r => ({ min: select_1.wrap `MIN(${r.root.id})`, max: r.root.id }));
+console.log(joinedQuery.toSQL());
 // console.log(query.getOne());

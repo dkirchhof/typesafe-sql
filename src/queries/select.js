@@ -11,15 +11,27 @@ class Source {
         return `${this.table.tableName} AS ${this.alias}`;
     }
 }
+class Join {
+    constructor(source, leftColumn, operator, rightColumn) {
+        this.source = source;
+        this.leftColumn = leftColumn;
+        this.operator = operator;
+        this.rightColumn = rightColumn;
+    }
+    toString() {
+        return `INNER JOIN ${this.source} ON ${this.leftColumn} ${this.operator} ${this.rightColumn}`;
+    }
+}
 class SelectQuery {
     constructor(table, alias) {
         this.record = {}; // MappedRecord<RecordType>;
-        this.sources = [];
+        this.joins = [];
         this.selectedColumns = [];
         this.filterColumns = [];
         this.groupByColumns = [];
         this.orderByColumns = [];
-        this.addSource(table, alias);
+        this.source = new Source(table, alias);
+        this.updateRecord(table, alias);
     }
     where(selector, operator = "=", valueOrColumnSelector /*| mappedRecordsPredicate<T>*/) {
         const column = selector(this.record);
@@ -60,22 +72,36 @@ class SelectQuery {
         this.limitTo = limit;
         return this;
     }
-    join(table, alias) {
-        this.addSource(table, alias);
+    join(table, alias, leftSelector, operator, rightSelector) {
+        this.updateRecord(table, alias);
+        const getColumn = (selector) => {
+            const selected = selector(this.record);
+            if (utils_1.isColumn(selected)) {
+                return new Column_1.Column(selected);
+            }
+            else if (utils_1.isWrappedColum(selected)) {
+                return new Column_1.Column(selected.column, selected.wrappedBy);
+            }
+        };
+        const leftColumn = getColumn(leftSelector);
+        const rightColumn = getColumn(rightSelector);
+        this.joins.push(new Join(new Source(table, alias), leftColumn, operator, rightColumn));
         return this;
     }
     select(mapper) {
         const resultSetSchema = mapper(this.record);
         this.resultSetMapper = mapper;
         this.selectedColumns = this.getSelectedColumns(resultSetSchema);
-        return new ExecutableSelectQuery(this.record, this.resultSetMapper, this.sources, this.selectedColumns, this.filterColumns, this.groupByColumns, this.orderByColumns, this.isDistinct, this.limitTo);
+        return new ExecutableSelectQuery(this.record, this.resultSetMapper, this.source, this.joins, this.selectedColumns, this.filterColumns, this.groupByColumns, this.orderByColumns, this.isDistinct, this.limitTo);
     }
     selectAll() {
         // to select all, the mapper just takes the record and returns it, as it is
         return this.select(r => r);
     }
-    addSource(table, alias) {
-        this.sources.push(new Source(table, alias));
+    updateRecord(table, alias) {
+        // copy each column of the table
+        // add tableAlias property to the column
+        // add a copy of whole columns object to the record
         this.record[alias] =
             Object.entries(table.columns)
                 .reduce((prev, [key, value]) => (Object.assign({}, prev, { [key]: Object.assign({}, value, { tableAlias: alias }) })), {});
@@ -97,10 +123,11 @@ class SelectQuery {
 }
 exports.SelectQuery = SelectQuery;
 class ExecutableSelectQuery {
-    constructor(record, resultSetMapper, sources, selectedColumns, filterColumns, groupByColumns, orderByColumns, isDistinct, limitTo) {
+    constructor(record, resultSetMapper, source, joins, selectedColumns, filterColumns, groupByColumns, orderByColumns, isDistinct, limitTo) {
         this.record = record;
         this.resultSetMapper = resultSetMapper;
-        this.sources = sources;
+        this.source = source;
+        this.joins = joins;
         this.selectedColumns = selectedColumns;
         this.filterColumns = filterColumns;
         this.groupByColumns = groupByColumns;
@@ -120,7 +147,8 @@ class ExecutableSelectQuery {
     toSQL() {
         const sqlParts = [
             `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`,
-            this.sourcesToSQL(),
+            this.sourceToSQL(),
+            this.joinsToSQL(),
             this.filtersToSQL(),
             this.groupByToSQL(),
             this.orderByToSQL(),
@@ -143,8 +171,11 @@ class ExecutableSelectQuery {
         });
     }
     // region string methods
-    sourcesToSQL() {
-        return `FROM ${this.sources.join(", ")}`;
+    sourceToSQL() {
+        return `FROM ${this.source}`;
+    }
+    joinsToSQL() {
+        return this.joins.join("\n");
     }
     distinctToSQL() {
         return this.isDistinct ? "DISTINCT " : "";
