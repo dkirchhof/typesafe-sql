@@ -87,7 +87,7 @@ const tables_1 = require("./tables");
 })();
 const joinedQuery = tables_1.PERSON
     .query()
-    .join(tables_1.PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
+    .join("LEFT OUTER", tables_1.PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
     .where(r => r.mother.firstname, "=", "daniel")
     .groupBy(r => r.mother.lastname)
     .orderBy(r => r.root.firstname)

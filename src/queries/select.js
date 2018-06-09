@@ -12,14 +12,15 @@ class Source {
     }
 }
 class Join {
-    constructor(source, leftColumn, operator, rightColumn) {
+    constructor(joinMode, source, leftColumn, operator, rightColumn) {
+        this.joinMode = joinMode;
         this.source = source;
         this.leftColumn = leftColumn;
         this.operator = operator;
         this.rightColumn = rightColumn;
     }
     toString() {
-        return `INNER JOIN ${this.source} ON ${this.leftColumn} ${this.operator} ${this.rightColumn}`;
+        return `${this.joinMode} JOIN ${this.source} ON ${this.leftColumn} ${this.operator} ${this.rightColumn}`;
     }
 }
 class SelectQuery {
@@ -32,6 +33,22 @@ class SelectQuery {
         this.orderByColumns = [];
         this.source = new Source(table, alias);
         this.updateRecord(table, alias);
+    }
+    join(joinMode, table, alias, leftSelector, operator, rightSelector) {
+        this.updateRecord(table, alias);
+        const getColumn = (selector) => {
+            const selected = selector(this.record);
+            if (utils_1.isColumn(selected)) {
+                return new Column_1.Column(selected);
+            }
+            else if (utils_1.isWrappedColum(selected)) {
+                return new Column_1.Column(selected.column, selected.wrappedBy);
+            }
+        };
+        const leftColumn = getColumn(leftSelector);
+        const rightColumn = getColumn(rightSelector);
+        this.joins.push(new Join(joinMode, new Source(table, alias), leftColumn, operator, rightColumn));
+        return this;
     }
     where(selector, operator = "=", valueOrColumnSelector /*| mappedRecordsPredicate<T>*/) {
         const column = selector(this.record);
@@ -70,22 +87,6 @@ class SelectQuery {
     }
     limit(limit) {
         this.limitTo = limit;
-        return this;
-    }
-    join(table, alias, leftSelector, operator, rightSelector) {
-        this.updateRecord(table, alias);
-        const getColumn = (selector) => {
-            const selected = selector(this.record);
-            if (utils_1.isColumn(selected)) {
-                return new Column_1.Column(selected);
-            }
-            else if (utils_1.isWrappedColum(selected)) {
-                return new Column_1.Column(selected.column, selected.wrappedBy);
-            }
-        };
-        const leftColumn = getColumn(leftSelector);
-        const rightColumn = getColumn(rightSelector);
-        this.joins.push(new Join(new Source(table, alias), leftColumn, operator, rightColumn));
         return this;
     }
     select(mapper) {

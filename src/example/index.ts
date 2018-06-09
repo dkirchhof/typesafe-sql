@@ -111,7 +111,7 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
 
 const joinedQuery = PERSON
     .query()
-    .join(PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
+    .join("LEFT OUTER", PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
     .where(r => r.mother.firstname, "=", "daniel")
     .groupBy(r => r.mother.lastname)
     .orderBy(r => r.root.firstname)

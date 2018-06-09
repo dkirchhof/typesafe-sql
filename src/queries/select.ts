@@ -1,4 +1,5 @@
 import { Column, FilterColumn, OrderByColumn, ProjectionColumn } from "../Column";
+import { JoinMode } from "../JoinMode";
 import { Operator } from "../Operator";
 import { IColumnOptions, IWrappedColumn, Table } from "../Table";
 import { isColumn, isWrappedColum } from "../utils";
@@ -20,10 +21,10 @@ class Source {
 }
 
 class Join {
-    constructor(private source: Source, private leftColumn: Column, private operator: Operator, private rightColumn: Column) { }
+    constructor(private joinMode: JoinMode, private source: Source, private leftColumn: Column, private operator: Operator, private rightColumn: Column) { }
 
     public toString() {
-        return `INNER JOIN ${this.source} ON ${this.leftColumn} ${this.operator} ${this.rightColumn}`;
+        return `${this.joinMode} JOIN ${this.source} ON ${this.leftColumn} ${this.operator} ${this.rightColumn}`;
     }
 }
 
@@ -43,6 +44,26 @@ export class SelectQuery<RecordType, ResultType = null> {
     constructor(table: Table<any>, alias: string) {
         this.source = new Source(table, alias);
         this.updateRecord(table, alias);
+    }
+
+    public join<JoinedType, Alias extends string>(joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, leftSelector: ColumnSelector<RecordType>, operator: Operator, rightSelector: ColumnSelector<RecordType & Record<Alias, JoinedType>>) {
+        this.updateRecord(table, alias);
+
+        const getColumn = (selector: ColumnSelector<RecordType>) => {
+            const selected = selector(this.record);
+
+            if (isColumn(selected)) {
+                return new Column(selected);
+            } else if (isWrappedColum(selected)) {
+                return new Column(selected.column, selected.wrappedBy);
+            }
+        };
+
+        const leftColumn = getColumn(leftSelector)!;
+        const rightColumn = getColumn(rightSelector)!;
+
+        this.joins.push(new Join(joinMode, new Source(table, alias), leftColumn, operator, rightColumn));
+        return (this as any) as SelectQuery<RecordType & Record<Alias, JoinedType>>;
     }
 
     public where<ColumnType>(selector: ColumnSelector<RecordType, ColumnType>, operator: Operator = "=", valueOrColumnSelector: ColumnType /*| mappedRecordsPredicate<T>*/) {
@@ -90,26 +111,6 @@ export class SelectQuery<RecordType, ResultType = null> {
     public limit(limit: number) {
         this.limitTo = limit;
         return this;
-    }
-
-    public join<JoinedType, Alias extends string>(table: Table<JoinedType>, alias: Alias, leftSelector: ColumnSelector<RecordType>, operator: Operator, rightSelector: ColumnSelector<RecordType & Record<Alias, JoinedType>>) {
-        this.updateRecord(table, alias);
-
-        const getColumn = (selector: ColumnSelector<RecordType>) => {
-            const selected = selector(this.record);
-
-            if (isColumn(selected)) {
-                return new Column(selected);
-            } else if (isWrappedColum(selected)) {
-                return new Column(selected.column, selected.wrappedBy);
-            }
-        };
-
-        const leftColumn = getColumn(leftSelector)!;
-        const rightColumn = getColumn(rightSelector)!;
-
-        this.joins.push(new Join(new Source(table, alias), leftColumn, operator, rightColumn));
-        return (this as any) as SelectQuery<RecordType & Record<Alias, JoinedType>>;
     }
 
     public select<Type>(mapper: (record: RecordType) => Type) {
