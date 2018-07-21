@@ -20,11 +20,11 @@ function convertValueToDB(column, valueOrColumn) {
     return valueOrColumn;
 }
 exports.convertValueToDB = convertValueToDB;
-function convertValueToJS(column, valueOrColumn) {
-    if (!isColumn(valueOrColumn) && column.converter) {
-        return column.converter.toJS(valueOrColumn);
+function convertValueToJS(column, value) {
+    if (column.converter) {
+        return column.converter.toJS(value);
     }
-    return valueOrColumn;
+    return value;
 }
 exports.convertValueToJS = convertValueToJS;
 function columnToString(column) {

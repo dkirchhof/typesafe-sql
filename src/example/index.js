@@ -19,19 +19,19 @@ const tables_1 = require("./tables");
     // console.log(await from(PERSON, "person").select(["id", "firstname", "lastname"]).execute(databaseProvider));
     // console.log(await from(PERSON, "person", PERSON, "person2").where(t => t.person.id, t=> t.person2.id).select([], []).execute(databaseProvider));
     // await PERSON.drop().execute(databaseProvider);
-    // await DATE_TEST.create().execute(databaseProvider);
-    // const date = new Date();
-    // await DATE_TEST.insert({ date }).execute(databaseProvider);
+    await tables_1.DATE_TEST.create().execute(databaseProvider);
+    const date = new Date();
+    await tables_1.DATE_TEST.insert({ date }).execute(databaseProvider);
     // console.log(await from(DATE_TEST, "dt")
     // 	.where(t => t.dt.date, new Date(), ">=")
     // 	.select()
     // 	.execute(databaseProvider)
     // );
-    // console.log(await from(DATE_TEST, "dt")
-    // 	.where(t => t.dt.date, new Date(), "<=")
-    // 	.select()
-    // 	.execute(databaseProvider)
-    // );
+    const result = await tables_1.DATE_TEST
+        .query()
+        .selectAll()
+        .getMany(databaseProvider);
+    console.log(result);
     // await DATE_TEST.delete().where("date", new Date()).execute(databaseProvider);
     // console.log(await from(DATE_TEST, "dt")
     // 	.select()
@@ -42,15 +42,16 @@ const tables_1 = require("./tables");
     // 	.select()
     // 	.execute(databaseProvider)
     // );
-    console.log((await tables_1.PERSON
-        .query()
-        // .where(r => r.root.firstname, "=", "Daniel")
-        .groupBy(r => r.root.lastname)
-        .orderBy(r => r.root.id)
-        .limit(10)
-        // .selectAll()
-        .select(r => ({ test: r.root.firstname }))
-        .getMany(databaseProvider)));
+    // console.log((await PERSON
+    //     .query()
+    //     // .where(r => r.root.firstname, "=", "Daniel")
+    //     .groupBy(r => r.root.lastname)
+    //     .orderBy(r => r.root.id)
+    //     .limit(10)
+    //     // .selectAll()
+    //     .select(r => ({ test: r.root.firstname }))
+    //     .getMany(databaseProvider))
+    // );
     // console.log(PERSON
     //     .query()
     //     .where(r => r.root.firstname, "<>", "Daniel")

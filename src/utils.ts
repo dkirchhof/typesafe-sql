@@ -24,12 +24,12 @@ export function convertValueToDB(column: IExtendedColumnOptions<any>, valueOrCol
     return valueOrColumn;
 }
 
-export function convertValueToJS(column: IExtendedColumnOptions<any>, valueOrColumn: any) {
-    if (!isColumn(valueOrColumn)  && column.converter) {
-        return column.converter.toJS(valueOrColumn);
+export function convertValueToJS(column: IExtendedColumnOptions<any>, value: any) {
+    if (column.converter) {
+        return column.converter.toJS(value);
     }
 
-    return valueOrColumn;
+    return value;
 }
 
 export function columnToString(column: IExtendedColumnOptions<any>) {

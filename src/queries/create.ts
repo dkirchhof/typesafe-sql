@@ -26,7 +26,7 @@ export class CreateQuery {
                 const onDelete = column.references.onDelete || "NO ACTION";
                 const onUpdate = column.references.onUpdate || "NO ACTION";
 
-                sql += ` REFERENCES ${foreignTable}(${foreignColumn}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
+                sql += ` REFERENCES ${foreignTable}(${foreignColumn.toString()}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
             }
 
             return sql;

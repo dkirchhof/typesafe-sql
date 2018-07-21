@@ -1,9 +1,10 @@
+import { clone } from "deep-clone-ts/dc";
 import { Column, FilterColumn, OrderByColumn, ProjectionColumn } from "../Column";
 import { JoinMode } from "../JoinMode";
 import { Operator } from "../Operator";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { IColumnOptions, IWrappedColumn, Table } from "../Table";
-import { isColumn, isWrappedColum } from "../utils";
+import { convertValueToJS, isColumn, isWrappedColum } from "../utils";
 
 type MappedRecord<RecordType> = {
     [AliasKey in keyof RecordType] : {
@@ -193,7 +194,7 @@ class ExecutableSelectQuery<RecordType, ResultType> {
         const result = await databaseProvider.get(sql);
 
         return result.map(record => {
-            const schemaCopy = JSON.parse(JSON.stringify(resultSetSchema));
+            const schemaCopy = clone(resultSetSchema);
             this.fillResultSet(schemaCopy, record);
             
             return schemaCopy;
@@ -220,20 +221,12 @@ class ExecutableSelectQuery<RecordType, ResultType> {
     }
 
     private fillResultSet(resultSetSchema: any, record: any, path = "") {
-        
-        // Object.entries(resultSetSchema).forEach(([key, value]) => {
-        //     if (isColumn(value)) {
-        //         resultSetSchema[key] = record[`${path}${key}`];
-        //     } else if (isWrappedColum(value)) {
-        //         resultSetSchema[key] = record[`${value.column.tableAlias}_${value.column.columnName}`];
-        //     } else if (typeof value === "object") {
-        //         this.fillResultSet(value, record);
-        //     }
-        // });
 
         Object.entries(resultSetSchema).forEach(([key, value]) => {
-            if (isColumn(value) || isWrappedColum(value)) {
-                resultSetSchema[key] = record[`${path}${key}`];
+            if (isColumn(value)) {
+                resultSetSchema[key] = convertValueToJS(value, record[`${path}${key}`]);
+            } else if (isWrappedColum(value)) {
+                resultSetSchema[key] = convertValueToJS(value.column, record[`${path}${key}`]);
             } else if (typeof value === "object") {
                 this.fillResultSet(value, record, `${path}${key}_`);
             }

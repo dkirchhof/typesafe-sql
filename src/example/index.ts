@@ -27,10 +27,10 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
 
     // await PERSON.drop().execute(databaseProvider);
 
-    // await DATE_TEST.create().execute(databaseProvider);
+    await DATE_TEST.create().execute(databaseProvider);
 
-    // const date = new Date();
-    // await DATE_TEST.insert({ date }).execute(databaseProvider);
+    const date = new Date();
+    await DATE_TEST.insert({ date }).execute(databaseProvider);
 
     // console.log(await from(DATE_TEST, "dt")
     // 	.where(t => t.dt.date, new Date(), ">=")
@@ -38,11 +38,13 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
     // 	.execute(databaseProvider)
     // );
 
-    // console.log(await from(DATE_TEST, "dt")
-    // 	.where(t => t.dt.date, new Date(), "<=")
-    // 	.select()
-    // 	.execute(databaseProvider)
-    // );
+    const result = await DATE_TEST
+        .query()
+        .selectAll()
+        .getMany(databaseProvider);
+
+    console.log(result);
+    
 
     // await DATE_TEST.delete().where("date", new Date()).execute(databaseProvider);
 
@@ -58,16 +60,16 @@ import { BLOG, DATE_TEST, PERSON, POST } from "./tables";
     // 	.execute(databaseProvider)
     // );
 
-    console.log((await PERSON
-        .query()
-        // .where(r => r.root.firstname, "=", "Daniel")
-        .groupBy(r => r.root.lastname)
-        .orderBy(r => r.root.id)
-        .limit(10)
-        // .selectAll()
-        .select(r => ({ test: r.root.firstname }))
-        .getMany(databaseProvider))
-    );
+    // console.log((await PERSON
+    //     .query()
+    //     // .where(r => r.root.firstname, "=", "Daniel")
+    //     .groupBy(r => r.root.lastname)
+    //     .orderBy(r => r.root.id)
+    //     .limit(10)
+    //     // .selectAll()
+    //     .select(r => ({ test: r.root.firstname }))
+    //     .getMany(databaseProvider))
+    // );
 
     // console.log(PERSON
     //     .query()

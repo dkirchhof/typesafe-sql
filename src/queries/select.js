@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const dc_1 = require("deep-clone-ts/dc");
 const Column_1 = require("../Column");
 const utils_1 = require("../utils");
 class Source {
@@ -146,7 +147,7 @@ class ExecutableSelectQuery {
         console.log(sql);
         const result = await databaseProvider.get(sql);
         return result.map(record => {
-            const schemaCopy = JSON.parse(JSON.stringify(resultSetSchema));
+            const schemaCopy = dc_1.clone(resultSetSchema);
             this.fillResultSet(schemaCopy, record);
             return schemaCopy;
         });
@@ -168,18 +169,12 @@ class ExecutableSelectQuery {
             .join("\n  ");
     }
     fillResultSet(resultSetSchema, record, path = "") {
-        // Object.entries(resultSetSchema).forEach(([key, value]) => {
-        //     if (isColumn(value)) {
-        //         resultSetSchema[key] = record[`${path}${key}`];
-        //     } else if (isWrappedColum(value)) {
-        //         resultSetSchema[key] = record[`${value.column.tableAlias}_${value.column.columnName}`];
-        //     } else if (typeof value === "object") {
-        //         this.fillResultSet(value, record);
-        //     }
-        // });
         Object.entries(resultSetSchema).forEach(([key, value]) => {
-            if (utils_1.isColumn(value) || utils_1.isWrappedColum(value)) {
-                resultSetSchema[key] = record[`${path}${key}`];
+            if (utils_1.isColumn(value)) {
+                resultSetSchema[key] = utils_1.convertValueToJS(value, record[`${path}${key}`]);
+            }
+            else if (utils_1.isWrappedColum(value)) {
+                resultSetSchema[key] = utils_1.convertValueToJS(value.column, record[`${path}${key}`]);
             }
             else if (typeof value === "object") {
                 this.fillResultSet(value, record, `${path}${key}_`);
