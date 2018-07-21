@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const sqlite_1 = require("sqlite");
 const SQLiteProvider_1 = require("../providers/SQLiteProvider");
-const SQLFunctions_1 = require("../SQLFunctions");
 const tables_1 = require("./tables");
 (async () => {
     // const db = await open("testDatabase/db.db");
@@ -43,54 +42,55 @@ const tables_1 = require("./tables");
     // 	.select()
     // 	.execute(databaseProvider)
     // );
-    console.log(tables_1.PERSON
+    console.log((await tables_1.PERSON
         .query()
-        .where(r => r.root.firstname, "=", "Daniel")
+        // .where(r => r.root.firstname, "=", "Daniel")
         .groupBy(r => r.root.lastname)
         .orderBy(r => r.root.id)
         .limit(10)
-        .selectAll()
-        .toSQL());
-    console.log(tables_1.PERSON
-        .query()
-        .where(r => r.root.firstname, "<>", "Daniel")
-        .select(r => ({ id: r.root.id, FIRSTNAME: SQLFunctions_1.CF `UPPER(${r.root.firstname})` }))
-        .toSQL());
-    console.log(tables_1.PERSON
-        .query()
-        .groupBy(r => r.root.id)
-        .selectAll()
-        .toSQL());
-    console.log(tables_1.PERSON
-        .query()
-        .groupBy(r => SQLFunctions_1.CF `UPPER(${r.root.lastname})`)
-        .selectAll()
-        .toSQL());
-    console.log(tables_1.PERSON
-        .insert({ id: 1, firstname: "Daniel", lastname: "Kirchhof" })
-        .toSQL());
-    console.log(tables_1.PERSON
-        .insert([
-        { id: 2, firstname: "AAAA", lastname: "aaaa" },
-        { id: 3, firstname: "BBBB", lastname: "bbbb" },
-    ])
-        .toSQL());
-    console.log(tables_1.PERSON
-        .update({ firstname: "CCCC" })
-        .where("firstname", "=", "AAAA")
-        .toSQL());
-    console.log(tables_1.PERSON
-        .delete()
-        .where("firstname", "=", "CCCC")
-        .toSQL());
+        // .selectAll()
+        .select(r => ({ test: r.root.firstname }))
+        .getMany(databaseProvider)));
+    // console.log(PERSON
+    //     .query()
+    //     .where(r => r.root.firstname, "<>", "Daniel")
+    //     .select(r => ({ id: r.root.id, FIRSTNAME: CF`UPPER(${r.root.firstname})` }))
+    //     .toSQL());
+    // console.log(PERSON
+    //     .query()
+    //     .groupBy(r => r.root.id)
+    //     .selectAll()
+    //     .toSQL());
+    // console.log(PERSON
+    //     .query()
+    //     .groupBy(r => CF`UPPER(${r.root.lastname})`)
+    //     .selectAll()
+    //     .toSQL());
+    // console.log(PERSON
+    //     .insert({ id: 1, firstname: "Daniel", lastname: "Kirchhof" })
+    //     .toSQL());
+    // console.log(PERSON
+    //     .insert([
+    //         { id: 2, firstname: "AAAA", lastname: "aaaa" },
+    //         { id: 3, firstname: "BBBB", lastname: "bbbb" },
+    //     ])
+    //     .toSQL());
+    // console.log(PERSON
+    //     .update({ firstname: "CCCC" })
+    //     .where("firstname", "=", "AAAA")
+    //     .toSQL());
+    // console.log(PERSON
+    //     .delete()
+    //     .where("firstname", "=", "CCCC")
+    //     .toSQL());
     db.close();
 })();
-const joinedQuery = tables_1.PERSON
-    .query()
-    .join("LEFT OUTER", tables_1.PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
-    .where(r => r.mother.firstname, "=", "daniel")
-    .groupBy(r => r.mother.lastname)
-    .orderBy(r => r.root.firstname)
-    .select(r => ({ name: r.root.firstname, min: SQLFunctions_1.MIN(r.root.id), max: SQLFunctions_1.MAX(r.root.id) }));
-console.log(joinedQuery.toSQL());
+// const joinedQuery = PERSON
+//     .query()
+//     .join("LEFT OUTER", PERSON, "mother", r => r.root.id, "=", r => r.mother.id)
+//     .where(r => r.mother.firstname, "=", "daniel")
+//     .groupBy(r => r.mother.lastname)
+//     .orderBy(r => r.root.firstname)
+//     .select(r => ({ name: r.root.firstname, min: MIN(r.root.id), max: MAX(r.root.id) }));
+// console.log(joinedQuery.toSQL());
 // console.log(query.getOne());

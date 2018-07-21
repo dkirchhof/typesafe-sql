@@ -13,13 +13,20 @@ function sanitizeValue(value) {
     return null;
 }
 exports.sanitizeValue = sanitizeValue;
-function convertValue(column, valueOrColumn) {
+function convertValueToDB(column, valueOrColumn) {
     if (!isColumn(valueOrColumn) && column.converter) {
         return column.converter.toDB(valueOrColumn);
     }
     return valueOrColumn;
 }
-exports.convertValue = convertValue;
+exports.convertValueToDB = convertValueToDB;
+function convertValueToJS(column, valueOrColumn) {
+    if (!isColumn(valueOrColumn) && column.converter) {
+        return column.converter.toJS(valueOrColumn);
+    }
+    return valueOrColumn;
+}
+exports.convertValueToJS = convertValueToJS;
 function columnToString(column) {
     const fullName = `${column.tableAlias}.${column.columnName}`;
     if (column.wrappedBy) {
@@ -38,13 +45,3 @@ function isWrappedColum(wrapper) {
     return wrapper.column !== undefined && wrapper.wrappedBy !== undefined;
 }
 exports.isWrappedColum = isWrappedColum;
-// export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtendedColumnOptions<T>): IExtendedColumnOptions<T>
-// {
-// 	const copy = JSON.parse(JSON.stringify(column));
-// 	copy.wrappedBy = [...strings];
-// 	return copy;
-// }
-// export function wrap<TableType>(strings: TemplateStringsArray, column: keyof TableType): WrappedColumn<TableType>
-// {
-// 	return { column, wrappedBy: [...strings] };
-// }

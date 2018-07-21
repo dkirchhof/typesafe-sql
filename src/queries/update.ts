@@ -1,4 +1,4 @@
-import { columnToString, convertValue } from "..";
+import { columnToString, convertValueToDB } from "..";
 import { IFilter } from "../Filter";
 import { Operator } from "../Operator";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
@@ -23,7 +23,7 @@ export class UpdateQuery<Type> {
     public toSQL() {
         const values = Object.entries(this.values).map(([column, value]) => {
             const sourceColumn = this.table.columns[column as keyof Type];
-            const convertedValue = convertValue(sourceColumn, value);
+            const convertedValue = convertValueToDB(sourceColumn, value);
             const sanitizedValue = sanitizeValue(convertedValue);
 
             return `${column} = ${sanitizedValue}`;
@@ -34,7 +34,7 @@ export class UpdateQuery<Type> {
         if (this.filters.length) {
             const filters = this.filters.map(filter => {
                 const sourceColumn = this.table.columns[filter.column];
-                const convertedValue = convertValue(sourceColumn, filter.value);
+                const convertedValue = convertValueToDB(sourceColumn, filter.value);
                 const sanitizedValue = sanitizeValue(convertedValue);
 
                 return `${filter.column} ${filter.operator} ${sanitizedValue}`;

@@ -19,7 +19,7 @@ class UpdateQuery {
     toSQL() {
         const values = Object.entries(this.values).map(([column, value]) => {
             const sourceColumn = this.table.columns[column];
-            const convertedValue = __1.convertValue(sourceColumn, value);
+            const convertedValue = __1.convertValueToDB(sourceColumn, value);
             const sanitizedValue = utils_1.sanitizeValue(convertedValue);
             return `${column} = ${sanitizedValue}`;
         }).join(", ");
@@ -27,7 +27,7 @@ class UpdateQuery {
         if (this.filters.length) {
             const filters = this.filters.map(filter => {
                 const sourceColumn = this.table.columns[filter.column];
-                const convertedValue = __1.convertValue(sourceColumn, filter.value);
+                const convertedValue = __1.convertValueToDB(sourceColumn, filter.value);
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
                 return `${filter.column} ${filter.operator} ${sanitizedValue}`;
             }).join(" AND ");

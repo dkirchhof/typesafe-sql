@@ -16,11 +16,11 @@ class FilterableQuery extends BaseQuery_1.BaseQuery {
             const columnOptions = this.table.columns[filter.column];
             let value;
             if (Array.isArray(filter.value)) {
-                const list = filter.value.map(v => __1.sanitizeValue(__1.convertValue(columnOptions, v)));
+                const list = filter.value.map(v => __1.sanitizeValue(__1.convertValueToJS(columnOptions, v)));
                 value = `(${list.join(", ")})`;
             }
             else {
-                value = __1.sanitizeValue(__1.convertValue(columnOptions, filter.value));
+                value = __1.sanitizeValue(__1.convertValueToJS(columnOptions, filter.value));
             }
             return `${filter.column} ${filter.operator} ${value}`;
         };

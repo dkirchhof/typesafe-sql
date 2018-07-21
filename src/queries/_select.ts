@@ -2,7 +2,7 @@ import { Table, ExtendedMappedTable, IExtendedColumnOptions, AggregationType } f
 import { sanitizeValue, columnToString } from "../utils";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Operator } from "../Operator";
-import { isColumn, convertValue } from "..";
+import { isColumn, convertValueToDB } from "..";
 
 // waiting for https://github.com/Microsoft/TypeScript/issues/17293 or https://github.com/Microsoft/TypeScript/issues/15058
 
@@ -178,7 +178,7 @@ export function from<
 						const filters = this.filters.map(filter =>
 						{
 							const columnName = columnToString(filter.column);
-							const convertedValueOrColumn = convertValue(filter.column, filter.valueOrColumn);
+							const convertedValueOrColumn = convertValueToDB(filter.column, filter.valueOrColumn);
 							const sanitizedValueOrColumn = sanitizeValue(convertedValueOrColumn);
 
 							return `${columnName} ${filter.operator} ${sanitizedValueOrColumn}`;

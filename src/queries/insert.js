@@ -21,7 +21,7 @@ class InsertQuery {
         const tuples = this.tuples.map(tuple => {
             const values = Object.entries(tuple).map(([column, value]) => {
                 const sourceColumn = this.table.columns[column];
-                const convertedValue = __1.convertValue(sourceColumn, value);
+                const convertedValue = __1.convertValueToDB(sourceColumn, value);
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
                 return sanitizedValue;
             }).join(", ");

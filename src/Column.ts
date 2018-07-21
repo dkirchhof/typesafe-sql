@@ -1,4 +1,4 @@
-import { IExtendedColumnOptions, convertValue, sanitizeValue } from ".";
+import { convertValueToDB, IExtendedColumnOptions, sanitizeValue } from ".";
 import { Operator } from "./Operator";
 
 export class Column {
@@ -31,7 +31,7 @@ export class FilterColumn extends Column {
     }
 
     public toString() {
-        const convertedValueOrColumn = convertValue(this.column, this.value);
+        const convertedValueOrColumn = convertValueToDB(this.column, this.value);
         const sanitizedValueOrColumn = sanitizeValue(convertedValueOrColumn);
 
         return `${super.toString()} ${this.operator} ${sanitizedValueOrColumn}`;

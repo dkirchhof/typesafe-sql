@@ -16,9 +16,17 @@ export function sanitizeValue(value: any): string | null {
     return null;
 }
 
-export function convertValue(column: IExtendedColumnOptions<any>, valueOrColumn: any) {
+export function convertValueToDB(column: IExtendedColumnOptions<any>, valueOrColumn: any) {
     if (!isColumn(valueOrColumn)  && column.converter) {
         return column.converter.toDB(valueOrColumn);
+    }
+
+    return valueOrColumn;
+}
+
+export function convertValueToJS(column: IExtendedColumnOptions<any>, valueOrColumn: any) {
+    if (!isColumn(valueOrColumn)  && column.converter) {
+        return column.converter.toJS(valueOrColumn);
     }
 
     return valueOrColumn;
@@ -41,15 +49,3 @@ export function isColumn(column: any): column is IExtendedColumnOptions<any> {
 export function isWrappedColum(wrapper: any): wrapper is IWrappedColumn<any> {
     return (wrapper as IWrappedColumn<any>).column !== undefined && (wrapper as IWrappedColumn<any>).wrappedBy !== undefined;
 }
-
-// export function wrappedColumn<T>(strings: TemplateStringsArray, column: IExtendedColumnOptions<T>): IExtendedColumnOptions<T>
-// {
-// 	const copy = JSON.parse(JSON.stringify(column));
-// 	copy.wrappedBy = [...strings];
-// 	return copy;
-// }
-
-// export function wrap<TableType>(strings: TemplateStringsArray, column: keyof TableType): WrappedColumn<TableType>
-// {
-// 	return { column, wrappedBy: [...strings] };
-// }

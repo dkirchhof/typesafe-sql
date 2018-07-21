@@ -20,7 +20,7 @@ class DeleteQuery {
         if (this.filters.length) {
             const filters = this.filters.map(filter => {
                 const sourceColumn = this.table.columns[filter.column];
-                const convertedValue = __1.convertValue(sourceColumn, filter.value);
+                const convertedValue = __1.convertValueToDB(sourceColumn, filter.value);
                 const sanitizedValue = utils_1.sanitizeValue(convertedValue);
                 return `${filter.column} ${filter.operator} ${sanitizedValue}`;
             }).join(" AND ");

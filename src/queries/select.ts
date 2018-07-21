@@ -1,6 +1,7 @@
 import { Column, FilterColumn, OrderByColumn, ProjectionColumn } from "../Column";
 import { JoinMode } from "../JoinMode";
 import { Operator } from "../Operator";
+import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { IColumnOptions, IWrappedColumn, Table } from "../Table";
 import { isColumn, isWrappedColum } from "../utils";
 
@@ -28,7 +29,7 @@ class Join {
     }
 }
 
-export class SelectQuery<RecordType, ResultType = null> {
+export class SelectQuery<RecordType> {
     protected record: any = {}; // MappedRecord<RecordType>;
     protected resultSetMapper: (record: RecordType) => any;
 
@@ -113,7 +114,7 @@ export class SelectQuery<RecordType, ResultType = null> {
         return this;
     }
 
-    public select<Type>(mapper: (record: RecordType) => Type) {
+    public select<ResultType>(mapper: (record: RecordType) => ResultType) {
         const resultSetSchema = mapper(this.record);
 
         this.resultSetMapper = mapper;
@@ -178,17 +179,26 @@ class ExecutableSelectQuery<RecordType, ResultType> {
         private limitTo: number,
     ) { }
 
-    public getOne() {
-        const resultSetSchema = this.resultSetMapper(this.record);
-        const result = { min: 1, max: 1384 };
-
-        this.fillResultSet(resultSetSchema, result);
-
-        return resultSetSchema as ResultType;
+    public async getOne(databaseProvider: IDatabaseProvider) {
+        const result = await this.getMany(databaseProvider);
+        return result[0];
     }
 
-    public getMany() {
-        return {} as ResultType[];
+    public async getMany(databaseProvider: IDatabaseProvider) {
+        const resultSetSchema = this.resultSetMapper(this.record);
+        const sql = this.toSQL();
+
+        console.log(sql);
+
+        const result = await databaseProvider.get(sql);
+
+        return result.map(record => {
+            const schemaCopy = JSON.parse(JSON.stringify(resultSetSchema));
+            this.fillResultSet(schemaCopy, record);
+            
+            return schemaCopy;
+            
+        }) as ResultType[];
     }
 
     public toSQL() {
@@ -209,12 +219,23 @@ class ExecutableSelectQuery<RecordType, ResultType> {
             .join("\n  ");
     }
 
-    private fillResultSet(resultSetSchema: any, result: any) {
+    private fillResultSet(resultSetSchema: any, record: any, path = "") {
+        
+        // Object.entries(resultSetSchema).forEach(([key, value]) => {
+        //     if (isColumn(value)) {
+        //         resultSetSchema[key] = record[`${path}${key}`];
+        //     } else if (isWrappedColum(value)) {
+        //         resultSetSchema[key] = record[`${value.column.tableAlias}_${value.column.columnName}`];
+        //     } else if (typeof value === "object") {
+        //         this.fillResultSet(value, record);
+        //     }
+        // });
+
         Object.entries(resultSetSchema).forEach(([key, value]) => {
             if (isColumn(value) || isWrappedColum(value)) {
-                resultSetSchema[key] = result[key];
+                resultSetSchema[key] = record[`${path}${key}`];
             } else if (typeof value === "object") {
-                this.fillResultSet(value, result);
+                this.fillResultSet(value, record, `${path}${key}_`);
             }
         });
     }

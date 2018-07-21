@@ -5,3 +5,4 @@ export * from "./providers/IDatabaseProvider";
 export * from "./providers/SQLiteProvider";
 
 export * from "./queries/select";
+export * from "./SQLFunctions";

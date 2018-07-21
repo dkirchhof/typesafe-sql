@@ -32,7 +32,7 @@ class FilterColumn extends Column {
         this.value = value;
     }
     toString() {
-        const convertedValueOrColumn = _1.convertValue(this.column, this.value);
+        const convertedValueOrColumn = _1.convertValueToDB(this.column, this.value);
         const sanitizedValueOrColumn = _1.sanitizeValue(convertedValueOrColumn);
         return `${super.toString()} ${this.operator} ${sanitizedValueOrColumn}`;
     }

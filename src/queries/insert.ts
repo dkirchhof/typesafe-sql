@@ -1,4 +1,4 @@
-import { convertValue } from "..";
+import { convertValueToDB } from "..";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
@@ -25,7 +25,7 @@ export class InsertQuery<Type> {
         const tuples = this.tuples.map(tuple => {
             const values = Object.entries(tuple).map(([column, value]) => {
                 const sourceColumn = this.table.columns[column as keyof Type];
-                const convertedValue = convertValue(sourceColumn, value);
+                const convertedValue = convertValueToDB(sourceColumn, value);
                 const sanitizedValue = sanitizeValue(convertedValue);
 
                 return sanitizedValue;

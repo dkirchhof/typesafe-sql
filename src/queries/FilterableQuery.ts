@@ -1,4 +1,4 @@
-import { convertValue, sanitizeValue, Table } from "..";
+import { convertValueToDB, convertValueToJS, sanitizeValue, Table } from "..";
 import { IFilter } from "../Filter";
 import { Operator } from "../Operator";
 import { BaseQuery } from "./BaseQuery";
@@ -17,10 +17,10 @@ export abstract class FilterableQuery<Type> extends BaseQuery<Type> {
             let value;
 
             if (Array.isArray(filter.value)) {
-                const list = filter.value.map(v => sanitizeValue(convertValue(columnOptions, v)));
+                const list = filter.value.map(v => sanitizeValue(convertValueToJS(columnOptions, v)));
                 value = `(${list.join(", ")})`;
             } else {
-                value = sanitizeValue(convertValue(columnOptions, filter.value));
+                value = sanitizeValue(convertValueToJS(columnOptions, filter.value));
             }
 
             return `${filter.column} ${filter.operator} ${value}`;

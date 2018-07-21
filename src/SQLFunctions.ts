@@ -1,29 +1,29 @@
 import { IWrappedColumn } from ".";
 
-export function AVG(column: any) {
-    return { column, wrappedBy: ["AVG(", ")"] };
+export function AVG<T>(column: T): T {
+    return { column, wrappedBy: ["AVG(", ")"] } as any;
 }
 
-export function COUNT(column: any) {
-    return { column, wrappedBy: ["COUNT(", ")"] };
+export function COUNT<T>(column: T): T {
+    return { column, wrappedBy: ["COUNT(", ")"] } as any;
 }
 
-export function MIN(column: any): IWrappedColumn<any> {
-    return { column, wrappedBy: ["MIN(", ")"] };
+export function MIN<T>(column: T): T {
+    return { column, wrappedBy: ["MIN(", ")"] } as any;
 }
 
-export function MAX(column: any): IWrappedColumn<any> {
-    return { column, wrappedBy: ["MAX(", ")"] };
+export function MAX<T>(column: T): T {
+    return { column, wrappedBy: ["MAX(", ")"] } as any;
 }
 
-export function SUM(column: any): IWrappedColumn<any> {
-    return { column, wrappedBy: ["SUM(", ")"] };
+export function SUM<T>(column: T): T {
+    return { column, wrappedBy: ["SUM(", ")"] } as any;
 }
 
-export function TOTAL(column: any): IWrappedColumn<any> {
-    return { column, wrappedBy: ["TOTAL(", ")"] };
+export function TOTAL<T>(column: T): T {
+    return { column, wrappedBy: ["TOTAL(", ")"] } as any;
 }
 
-export function CF<T>(strings: TemplateStringsArray, column: any): IWrappedColumn<any> {
-    return { column, wrappedBy: [strings[0], strings[1]] };
+export function CF<T>(strings: TemplateStringsArray, column: T): T {
+    return { column, wrappedBy: [strings[0], strings[1]] } as any;
 }

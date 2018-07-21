@@ -103,7 +103,7 @@ function from(table1, alias1, table2, alias2) {
                     if (this.filters.length) {
                         const filters = this.filters.map(filter => {
                             const columnName = utils_1.columnToString(filter.column);
-                            const convertedValueOrColumn = __1.convertValue(filter.column, filter.valueOrColumn);
+                            const convertedValueOrColumn = __1.convertValueToDB(filter.column, filter.valueOrColumn);
                             const sanitizedValueOrColumn = utils_1.sanitizeValue(convertedValueOrColumn);
                             return `${columnName} ${filter.operator} ${sanitizedValueOrColumn}`;
                         });
