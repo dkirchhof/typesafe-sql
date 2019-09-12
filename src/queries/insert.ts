@@ -23,15 +23,9 @@ export class InsertQuery<Type> {
         const columns = Object.keys(this.tuples[0]).join(", ");
 
         const tuples = this.tuples.map(tuple => {
-            const values = Object.entries(tuple).map(([column, value]) => {
-                const sourceColumn = this.table.columns[column as keyof Type];
-                const convertedValue = convertValueToDB(sourceColumn, value);
-                const sanitizedValue = sanitizeValue(convertedValue);
+            const sanitizedValues = Object.values(tuple).map(value => sanitizeValue(value)).join(", ");
 
-                return sanitizedValue;
-            }).join(", ");
-
-            return `(${values})`;
+            return `(${sanitizedValues})`;
 
         }).join(", ");
 

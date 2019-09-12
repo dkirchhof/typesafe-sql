@@ -9,22 +9,22 @@ export class CreateQuery {
     }
 
     public toSQL() {
-        const columns = Object.values(this.table.columns).map(column => {
-            let sql = `${column.columnName} ${column.dataType}`;
+        const columns = Object.entries(this.table.columns).map(([columnName, options]) => {
+            let sql = `${columnName} ${options.dataType}`;
 
-            if (column.unique) {
+            if (options.unique) {
                 sql += ` UNIQUE`;
             }
 
-            if (column.notNull) {
+            if (options.notNull) {
                 sql += ` NOT NULL`;
             }
 
-            if (column.references) {
-                const foreignTable = column.references.table.tableName;
-                const foreignColumn = column.references.column;
-                const onDelete = column.references.onDelete || "NO ACTION";
-                const onUpdate = column.references.onUpdate || "NO ACTION";
+            if (options.references) {
+                const foreignTable = options.references.table.tableName;
+                const foreignColumn = options.references.column;
+                const onDelete = options.references.onDelete || "NO ACTION";
+                const onUpdate = options.references.onUpdate || "NO ACTION";
 
                 sql += ` REFERENCES ${foreignTable}(${foreignColumn.toString()}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
             }
@@ -33,12 +33,12 @@ export class CreateQuery {
         });
 
         let primaryConstraint = "";
-        const primaryColumns = Object.values(this.table.columns).filter(column => column.primary);
+        const primaryColumns = Object.entries(this.table.columns).filter(([, options]) => options.primary);
 
         if (primaryColumns.length) {
-            primaryConstraint = `,\n\tPRIMARY KEY (${primaryColumns.map(column => column.columnName).join(", ")})`;
+            primaryConstraint = `,\n\tPRIMARY KEY (${primaryColumns.map(([columnName]) => columnName).join(", ")})`;
         }
 
-        return `CREATE TABLE ${this.table.tableName} (\n\t${columns.join(",\n\t")}${primaryConstraint}\n)`;
+        return `CREATE TABLE ${this.table.tableName} (\n  ${columns.join(",\n  ")}${primaryConstraint}\n)`;
     }
 }

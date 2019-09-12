@@ -1,19 +1,16 @@
 {
     "compilerOptions": {
         "sourceMap": false,
-		"noImplicitAny": true,
-		"experimentalDecorators": true,
         "module": "commonjs",
-        "target": "es2017",
-		"allowJs": false,
-		"strictNullChecks": true,
-		"declaration": false
+        "target": "esnext",
+		"strict": true,
+        "declaration": true,
+        "outDir": "lib/"
 	},
     "include": [
         "./src/**/*.ts"
     ],
 	"exclude": [
-        "node_modules",
-		"tests"
+        "node_modules"
 	]	
 }

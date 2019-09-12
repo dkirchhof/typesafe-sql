@@ -1,4 +1,4 @@
-import { IConverter, Table } from "../Table";
+import { Table } from "../Table";
 
 export interface IBlog {
     id: number;
@@ -17,6 +17,7 @@ export interface IPerson {
     id: number;
     firstname: string;
     lastname: string;
+    parentId: number | null;
 }
 
 export const BLOG = new Table<IBlog>("blogs", {
@@ -36,17 +37,5 @@ export const PERSON = new Table<IPerson>("persons", {
     firstname: { dataType: "TEXT" },
     id: { dataType: "INTEGER", primary: true },
     lastname: { dataType: "TEXT" },
-});
-
-interface IDateTest {
-    date: Date;
-}
-
-const dateConverter: IConverter<Date> = {
-    toDB: (input) => input.toISOString(),
-    toJS: (input) => new Date(input),
-};
-
-export const DATE_TEST = new Table<IDateTest>("dateTests", {
-    date: { dataType: "TEXT", converter: dateConverter },
+    parentId: { dataType: "INTEGER" },
 });

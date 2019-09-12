@@ -1,4 +1,4 @@
-import { columnToString, convertValueToDB } from "..";
+import { convertValueToDB } from "..";
 import { IFilter } from "../Filter";
 import { Operator } from "../Operator";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";

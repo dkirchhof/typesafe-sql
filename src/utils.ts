@@ -5,15 +5,11 @@ export function sanitizeValue(value: any): string | null {
         return `"${value}"`;
     }
 
-    if (isColumn(value)) {
-        return columnToString(value);
-    }
-
     if (value !== undefined && value !== null) {
         return value.toString();
     }
 
-    return null;
+    return "null";
 }
 
 export function convertValueToDB(column: IExtendedColumnOptions<any>, valueOrColumn: any) {
@@ -30,16 +26,6 @@ export function convertValueToJS(column: IExtendedColumnOptions<any>, value: any
     }
 
     return value;
-}
-
-export function columnToString(column: IExtendedColumnOptions<any>) {
-    const fullName = `${column.tableAlias}.${column.columnName}`;
-
-    if (column.wrappedBy) {
-        return `${column.wrappedBy[0]}${fullName}${column.wrappedBy[1]}`;
-    } else {
-        return fullName;
-    }
 }
 
 export function isColumn(column: any): column is IExtendedColumnOptions<any> {

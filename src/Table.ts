@@ -1,3 +1,4 @@
+import { Column } from "./Column";
 import { CreateQuery } from "./queries/create";
 import { DeleteQuery } from "./queries/delete";
 import { DropQuery } from "./queries/drop";
@@ -12,51 +13,26 @@ export interface IColumnOptions<Type> {
     notNull?: boolean;
     unique?: boolean;
     default?: Type;
-    converter?: IConverter<Type>;
-}
-
-export interface IExtendedColumnOptions<Type> extends IColumnOptions<Type> {
-    type?: Type;
-    columnName?: string;
-    tableAlias?: string;
-    selected?: boolean;
-    aggregation?: AggregationType;
-    wrappedBy?: string[];
-}
-
-// export interface WrappedColumn<Type>
-// {
-// 	column: keyof Type;
-// 	wrappedBy: string[];
-// }
-
-export interface IWrappedColumn<ColumnType> {
-    column: IExtendedColumnOptions<ColumnType>;
-    wrappedBy: [string, string];
 }
 
 export class ForeignKey<Type> {
     constructor(readonly table: Table<Type>, readonly column: keyof Type, readonly onDelete?: Action, readonly onUpdate?: Action) { }
 }
 
-export interface IConverter<Type> {
-    toJS: (input: any) => Type;
-    toDB: (input: Type) => any;
-}
-
-export type MappedTable<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
-export type ExtendedMappedTable<Type> = { [K in keyof Type]: IExtendedColumnOptions<Type[K]> };
+export type ColumnOptions<Type> = { [K in keyof Type]: IColumnOptions<Type[K]> };
+export type Columns<Type> = { [K in keyof Type]-?: Column<Type[K]>; };
+export type NullableColumns<Type> = { [K in keyof Type]-?: Column<Type[K] | null>; };
 
 export type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
 export type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE";
 export type AggregationType = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX";
 
 export class Table<Type> {
-    public readonly columns: ExtendedMappedTable<Type>;
+    // public readonly columns: ColumnOptions<Type>;
 
-    constructor(public readonly tableName: string, columns: MappedTable<Type>) {
-        Object.entries(columns as ExtendedMappedTable<any>).forEach(([key, value]) => value.columnName = key);
-        this.columns = columns;
+    constructor(public readonly tableName: string, public columns: ColumnOptions<Type>) {
+        // Object.entries(columns as ExtendedMappedTable<any>).forEach(([key, value]) => value.columnName = key);
+        // this.columns = columns;
     }
 
     public create() {
@@ -67,8 +43,8 @@ export class Table<Type> {
         return new DropQuery(this);
     }
 
-    public query() {
-        return new SelectQuery<Record<"root", Type>>(this, "root");
+    public query<Alias extends string>(alias: Alias) {
+        return new SelectQuery<Record<Alias, Columns<Type>>>(this, alias);
     }
 
     public insert(tuples: Type | Type[]) {
