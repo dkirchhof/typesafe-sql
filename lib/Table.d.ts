@@ -14,6 +14,8 @@ export declare class ForeignKey<Type> {
     readonly onUpdate?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined;
     constructor(table: Table<Type>, column: keyof Type, onDelete?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined, onUpdate?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined);
 }
+export declare type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
+export declare type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE";
 export declare type ColumnOptions<Type> = {
     [K in keyof Type]: IColumnOptions<Type[K]>;
 };
@@ -23,8 +25,6 @@ export declare type Columns<Type> = {
 export declare type NullableColumns<Type> = {
     [K in keyof Type]-?: Column<Type[K] | null>;
 };
-export declare type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
-export declare type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE";
 export declare class Table<Type> {
     readonly tableName: string;
     columns: ColumnOptions<Type>;

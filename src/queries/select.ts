@@ -1,8 +1,8 @@
 import { AliasedColumn, Column } from "../Column";
 import { GroupBy } from "../GroupBy";
 import { Join, JoinMode } from "../Join";
-import { OrderBy } from "../OrderBy";
-import { Predicate } from "../Predicate";
+import { OrderBy, OrderDirection } from "../OrderBy";
+import { Predicate, PredicateFactory } from "../Predicate";
 import { Projection } from "../Projection";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { AliasedSource } from "../Source";
@@ -11,7 +11,6 @@ import { Columns, NullableColumns, Table } from "../Table";
 interface IResultSet { [s: string]: Column<any>; }
 
 type ColumnSelector<RecordType> = (record: RecordType) => Column<any>;
-type PredicateFactory<RecordType> = (record: RecordType) => Predicate<any>;
 type ResultSetFactory<RecordType, ResultSetType extends IResultSet> = (record: RecordType) => ResultSetType;
 
 export function from<Type, Alias extends string>(table: Table<Type>, alias: Alias) {
@@ -71,7 +70,7 @@ class SelectQuery<RecordType> {
         return this;
     }
 
-    public orderBy(columnSelector: ColumnSelector<RecordType>, direction: "ASC" | "DESC") {
+    public orderBy(columnSelector: ColumnSelector<RecordType>, direction: OrderDirection) {
         const column = columnSelector(this.record);
 
         this.orderBys.push(new OrderBy(column, direction));
@@ -160,7 +159,7 @@ class ExecutableSelectQuery<ResultType> {
     }
 
     private joinsToSQL() {
-        return this.joins.join("\n");
+        return this.joins.join("\n  ");
     }
 
     private distinctToSQL() {

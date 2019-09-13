@@ -1,5 +1,5 @@
 import { Column } from "../Column";
-import { Predicate } from "../Predicate";
+import { Predicate, PredicateFactory } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Source } from "../Source";
 import { Columns, Table } from "../Table";
@@ -20,7 +20,7 @@ class DeleteQuery<Type> {
             .reduce((prev, columnName) => ({ ...prev, [columnName]: new Column(columnName) }), { } as Columns<Type>);
     }
 
-    public where(predicateFactory: (columns: Columns<Type>) => Predicate<any>) {
+    public where(predicateFactory: PredicateFactory<Columns<Type>>) {
         const predicate = predicateFactory(this.columns);
 
         this.wheres.push(predicate);

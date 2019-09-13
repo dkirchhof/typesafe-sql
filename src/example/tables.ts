@@ -1,41 +1,36 @@
-import { Table } from "../Table";
+import { ForeignKey, Table } from "../Table";
 
-export interface IBlog {
+interface IAlbum {
     id: number;
     name: string;
-    authorId: number;
-    content: string;
+    artistId: number;
+    genreId: number;
 }
 
-export interface IPost {
+interface IGenre {
     id: number;
-    blogId: number;
-    content: string;
+    name: string;
 }
 
-export interface IPerson {
+interface IArtist {
     id: number;
-    firstname: string;
-    lastname: string;
-    parentId: number | null;
+    name: string;
 }
 
-export const BLOG = new Table<IBlog>("blogs", {
-    authorId: { dataType: "INTEGER" },
-    content: { dataType: "TEXT" },
-    id: { dataType: "INTEGER" },
+export const artists = new Table<IArtist>("artists", {
+    id: { dataType: "INTEGER", primary: true },
     name: { dataType: "TEXT" },
 });
 
-export const POST = new Table<IPost>("posts", {
-    blogId: { dataType: "INTEGER" },
-    content: { dataType: "TEXT" },
-    id: { dataType: "INTEGER" },
+export const genres = new Table<IGenre>("genres", {
+    id: { dataType: "INTEGER", primary: true },
+    name: { dataType: "TEXT" },
 });
 
-export const PERSON = new Table<IPerson>("persons", {
-    firstname: { dataType: "TEXT" },
+export const albums = new Table<IAlbum>("albums", {
     id: { dataType: "INTEGER", primary: true },
-    lastname: { dataType: "TEXT" },
-    parentId: { dataType: "INTEGER" },
+    name: { dataType: "TEXT" },
+
+    artistId: { dataType: "INTEGER", references: new ForeignKey(artists, "id", "CASCADE") },
+    genreId: { dataType: "INTEGER", references: new ForeignKey(genres, "id", "CASCADE") },
 });
