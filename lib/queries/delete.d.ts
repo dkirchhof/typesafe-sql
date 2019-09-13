@@ -1,7 +1,7 @@
 import { PredicateFactory } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Columns, Table } from "../Table";
-export declare function deleteFrom(table: Table<any>): DeleteQuery<any>;
+export declare function deleteFrom<Type>(table: Table<Type>): DeleteQuery<Type>;
 declare class DeleteQuery<Type> {
     private source;
     private columns;

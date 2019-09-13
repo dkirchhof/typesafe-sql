@@ -1,17 +1,12 @@
 import { open } from "sqlite";
 
-import { avg, max, count } from "../Aggregation";
-import { eq, Predicate, gt } from "../Predicate";
+import { count } from "../Aggregation";
+import { eq, gt } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
-import { createTable } from "../queries/create";
-import { deleteFrom } from "../queries/delete";
-import { dropTable } from "../queries/drop";
-import { insertInto } from "../queries/insert";
-import { from } from "../queries/select";
-import { update } from "../queries/update";
-import { albums, artists, genres } from "./tables";
+import { createTable, deleteFrom, dropTable, from, insertInto, update } from "../queries";
 import { Table } from "../Table";
+import { albums, artists, genres } from "./tables";
 
 (async () => {
     // const db = await open("testDatabase/db.db");
@@ -31,9 +26,12 @@ import { Table } from "../Table";
 
     await selectAlbumsWithArtistAndGenre(databaseProvider);
     await selectGenresWithMoreThan5Albums(databaseProvider);
-    // await updateExample(databaseProvider);
-    // await deleteExample(databaseProvider);
-    // await dropExample(databaseProvider);
+    await updateAlbumName(databaseProvider);
+
+    await deleteExample(databaseProvider);
+    await selectAlbumsWithArtistAndGenre(databaseProvider);
+    
+    await dropExample(databaseProvider);
 
     db.close();
 })();
@@ -44,6 +42,8 @@ async function createExampleTable(table: Table<any>, databaseProvider: IDatabase
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
 async function insertArtists(databaseProvider: IDatabaseProvider) {
@@ -59,6 +59,8 @@ async function insertArtists(databaseProvider: IDatabaseProvider) {
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
 async function insertGenres(databaseProvider: IDatabaseProvider) {
@@ -73,13 +75,15 @@ async function insertGenres(databaseProvider: IDatabaseProvider) {
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
 async function insertAlbums(databaseProvider: IDatabaseProvider) {
     const query = insertInto(albums)
         .values([
             { id: 1, name: "Hollow Crown", artistId: 1, genreId: 1 },
-            { id: 2, name: "Lost Forever // Lost Together", artistId: 1, genreId: 1 },
+            { id: 2, name: "Lost Forever / Lost Together", artistId: 1, genreId: 1 },
 
             { id: 3, name: "This Is the Six", artistId: 2, genreId: 1 },
             { id: 4, name: "Brainwashed", artistId: 2, genreId: 1 },
@@ -99,6 +103,8 @@ async function insertAlbums(databaseProvider: IDatabaseProvider) {
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
 async function selectAlbumsWithArtistAndGenre(databaseProvider: IDatabaseProvider) {
@@ -111,6 +117,8 @@ async function selectAlbumsWithArtistAndGenre(databaseProvider: IDatabaseProvide
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
 async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvider) {
@@ -124,33 +132,47 @@ async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvid
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
-async function updateExample(databaseProvider: IDatabaseProvider) {
-    // const query = update(PERSONS)
-    //     .set({ lastname: "Musterfrau" })
-    //     .where(r => equals(r.firstname, "Erika"));
+async function updateAlbumName(databaseProvider: IDatabaseProvider) {
+    console.log("before");
+    console.log(await from(albums, "album").where(r => eq(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
+    
+    const query = update(albums)
+        .set({ name: "Lost Forever // Lost Together" })
+        .where(r => eq(r.name, "Lost Forever / Lost Together"));
+    
+    console.log(query.toSQL());
+    
+    const result = await query.execute(databaseProvider);
+    console.log(result);
 
-    // console.log(query.toSQL());
+    console.log("after");
+    console.log(await from(albums, "album").where(r => eq(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
 
-    // const result = await query.execute(databaseProvider);
-    // console.log(result);
+    console.log();
 }
 
 async function deleteExample(databaseProvider: IDatabaseProvider) {
-    // const query = deleteFrom(PERSONS)
-    //     .where(r => equals(r.id, 1));
+    const query = deleteFrom(genres)
+        .where(r => eq(r.name, "Punk"));
 
-    // console.log(query.toSQL());
+    console.log(query.toSQL());
 
-    // const result = await query.execute(databaseProvider);
-    // console.log(result);
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
 }
 
 async function dropExample(databaseProvider: IDatabaseProvider) {
-    // const query = dropTable(PERSONS);
-    // console.log(query.toSQL());
+    const query = dropTable(albums);
+    console.log(query.toSQL());
 
-    // const result = await query.execute(databaseProvider);
-    // console.log(result);
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
 }

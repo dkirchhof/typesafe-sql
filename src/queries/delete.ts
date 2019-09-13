@@ -4,8 +4,8 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Source } from "../Source";
 import { Columns, Table } from "../Table";
 
-export function deleteFrom(table: Table<any>) {
-    return new DeleteQuery(table);
+export function deleteFrom<Type>(table: Table<Type>) {
+    return new DeleteQuery<Type>(table);
 }
 
 class DeleteQuery<Type> {
