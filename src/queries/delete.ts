@@ -1,17 +1,30 @@
-import { convertValueToDB } from "..";
-import { IFilter } from "../Filter";
-import { Operator } from "../Operator";
+import { Column } from "../Column";
+import { Predicate } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { Table } from "../Table";
-import { sanitizeValue } from "../utils";
+import { Source } from "../Source";
+import { Columns, Table } from "../Table";
 
-export class DeleteQuery<Type> {
-    private filters: Array<IFilter<Type, keyof Type>> = [];
+export function deleteFrom(table: Table<any>) {
+    return new DeleteQuery(table);
+}
 
-    constructor(private table: Table<Type>) { }
+class DeleteQuery<Type> {
+    private source: Source;
+    private columns: Columns<Type>;
+    private wheres: Array<Predicate<any>> = [];
 
-    public where<Key extends keyof Type>(column: Key, operator: Operator, value: Type[Key]) {
-        this.filters.push({ column, value, operator });
+    constructor(table: Table<Type>) { 
+        this.source = new Source(table);
+
+        this.columns = Object.keys(table.columns)
+            .reduce((prev, columnName) => ({ ...prev, [columnName]: new Column(columnName) }), { } as Columns<Type>);
+    }
+
+    public where(predicateFactory: (columns: Columns<Type>) => Predicate<any>) {
+        const predicate = predicateFactory(this.columns);
+
+        this.wheres.push(predicate);
+
         return this;
     }
 
@@ -21,20 +34,27 @@ export class DeleteQuery<Type> {
     }
 
     public toSQL() {
-        let sql = `DELETE FROM ${this.table.tableName}`;
+        const sqlParts: string[] = [
+            this.deleteToSQL(),
+            this.wheresToSQL(),
+        ];
 
-        if (this.filters.length) {
-            const filters = this.filters.map(filter => {
-                const sourceColumn = this.table.columns[filter.column];
-                const convertedValue = convertValueToDB(sourceColumn, filter.value);
-                const sanitizedValue = sanitizeValue(convertedValue);
-
-                return `${filter.column} ${filter.operator} ${sanitizedValue}`;
-            }).join(" AND ");
-
-            sql = `${sql}\n  WHERE ${filters}`;
-        }
-
-        return sql;
+        // strip out null, undefined and empty strings
+        // and concat strings with linebreak and some spaces
+        return sqlParts
+            .filter(Boolean)
+            .join("\n  ");
     }
+
+    // region string methods
+
+    private deleteToSQL() {
+        return `DELETE FROM ${this.source}`;
+    }
+
+    private wheresToSQL() {
+        return this.wheres.length ? `WHERE ${this.wheres.join(" AND ")}` : "";
+    }
+
+    // endregion
 }

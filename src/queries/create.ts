@@ -1,10 +1,14 @@
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 
-export class CreateQuery {
+export function createTable(table: Table<any>) {
+    return new CreateQuery(table);
+}
+
+class CreateQuery {
     constructor(private readonly table: Table<any>) { }
 
-    public async execute(databaseProvider: IDatabaseProvider) {
+    public execute(databaseProvider: IDatabaseProvider) {
         return databaseProvider.execute(this.toSQL());
     }
 
@@ -36,7 +40,7 @@ export class CreateQuery {
         const primaryColumns = Object.entries(this.table.columns).filter(([, options]) => options.primary);
 
         if (primaryColumns.length) {
-            primaryConstraint = `,\n\tPRIMARY KEY (${primaryColumns.map(([columnName]) => columnName).join(", ")})`;
+            primaryConstraint = `,\n  PRIMARY KEY (${primaryColumns.map(([columnName]) => columnName).join(", ")})`;
         }
 
         return `CREATE TABLE ${this.table.tableName} (\n  ${columns.join(",\n  ")}${primaryConstraint}\n)`;

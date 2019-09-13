@@ -1,11 +1,16 @@
-import { Operator } from "../Operator";
+import { Predicate } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { Table } from "../Table";
-export declare class DeleteQuery<Type> {
-    private table;
-    private filters;
+import { Columns, Table } from "../Table";
+export declare function deleteFrom(table: Table<any>): DeleteQuery<any>;
+declare class DeleteQuery<Type> {
+    private source;
+    private columns;
+    private wheres;
     constructor(table: Table<Type>);
-    where<Key extends keyof Type>(column: Key, operator: Operator, value: Type[Key]): this;
+    where(predicateFactory: (columns: Columns<Type>) => Predicate<any>): this;
     execute(databaseProvider: IDatabaseProvider): Promise<number>;
     toSQL(): string;
+    private deleteToSQL;
+    private wheresToSQL;
 }
+export {};

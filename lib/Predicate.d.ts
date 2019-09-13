@@ -1,6 +1,6 @@
 import { Column } from "./Column";
+import { Operator } from "./Operator";
 declare type ColumnOrValueType = string | number | null;
-export declare type Operator = "=" | ">" | "<" | ">=" | "<=" | "<>" | "IN" | "NOT IN" | "IS" | "IS NOT";
 export declare class Predicate<Type extends ColumnOrValueType> {
     private readonly columnOrValue1;
     private readonly operator;

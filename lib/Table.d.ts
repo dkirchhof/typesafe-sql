@@ -1,10 +1,4 @@
 import { Column } from "./Column";
-import { CreateQuery } from "./queries/create";
-import { DeleteQuery } from "./queries/delete";
-import { DropQuery } from "./queries/drop";
-import { InsertQuery } from "./queries/insert";
-import { SelectQuery } from "./queries/select";
-import { UpdateQuery } from "./queries/update";
 export interface IColumnOptions<Type> {
     dataType: DataType;
     primary?: boolean;
@@ -31,15 +25,8 @@ export declare type NullableColumns<Type> = {
 };
 export declare type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
 export declare type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE";
-export declare type AggregationType = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX";
 export declare class Table<Type> {
     readonly tableName: string;
     columns: ColumnOptions<Type>;
     constructor(tableName: string, columns: ColumnOptions<Type>);
-    create(): CreateQuery;
-    drop(): DropQuery;
-    query<Alias extends string>(alias: Alias): SelectQuery<Record<Alias, Columns<Type>>>;
-    insert(tuples: Type | Type[]): InsertQuery<Type>;
-    update(values: Partial<Type>): UpdateQuery<Type>;
-    delete(): DeleteQuery<Type>;
 }

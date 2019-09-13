@@ -5,17 +5,18 @@ import { OrderBy } from "../OrderBy";
 import { Predicate } from "../Predicate";
 import { Projection } from "../Projection";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { Source } from "../Source";
-import { NullableColumns, Table } from "../Table";
+import { AliasedSource } from "../Source";
+import { Columns, NullableColumns, Table } from "../Table";
 interface IResultSet {
     [s: string]: Column<any>;
 }
 declare type ColumnSelector<RecordType> = (record: RecordType) => Column<any>;
 declare type PredicateFactory<RecordType> = (record: RecordType) => Predicate<any>;
 declare type ResultSetFactory<RecordType, ResultSetType extends IResultSet> = (record: RecordType) => ResultSetType;
-export declare class SelectQuery<RecordType> {
+export declare function from<Type, Alias extends string>(table: Table<Type>, alias: Alias): SelectQuery<Record<Alias, Columns<Type>>>;
+declare class SelectQuery<RecordType> {
     protected record: any;
-    protected source: Source;
+    protected source: AliasedSource;
     protected joins: Join[];
     protected wheres: Array<Predicate<any>>;
     protected havings: Array<Predicate<any>>;
@@ -30,7 +31,8 @@ export declare class SelectQuery<RecordType> {
     groupBy(columnSelector: ColumnSelector<RecordType>): this;
     orderBy(columnSelector: ColumnSelector<RecordType>, direction: "ASC" | "DESC"): this;
     limit(limit: number): this;
-    select<ResultSetType extends IResultSet>(resultSetFactory: ResultSetFactory<RecordType, ResultSetType>): ExecutableSelectQuery<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : ResultSetType[K]; }>;
+    getOne<ResultSetType extends IResultSet>(resultSetFactory: ResultSetFactory<RecordType, ResultSetType>): ExecutableSelectQuery<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : ResultSetType[K]; }>;
+    getMany<ResultSetType extends IResultSet>(resultSetFactory: ResultSetFactory<RecordType, ResultSetType>): ExecutableSelectQuery<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : ResultSetType[K]; }[]>;
     private updateRecord;
 }
 declare class ExecutableSelectQuery<ResultType> {
@@ -43,10 +45,10 @@ declare class ExecutableSelectQuery<ResultType> {
     private orderBys;
     private isDistinct?;
     private limitTo?;
-    constructor(projections: Projection[], source: Source, joins: Join[], wheres: Array<Predicate<any>>, havings: Array<Predicate<any>>, groupBys: GroupBy[], orderBys: OrderBy[], isDistinct?: boolean | undefined, limitTo?: number | undefined);
-    getOne(databaseProvider: IDatabaseProvider): Promise<ResultType>;
-    getMany(databaseProvider: IDatabaseProvider): Promise<ResultType[]>;
+    constructor(projections: Projection[], source: AliasedSource, joins: Join[], wheres: Array<Predicate<any>>, havings: Array<Predicate<any>>, groupBys: GroupBy[], orderBys: OrderBy[], isDistinct?: boolean | undefined, limitTo?: number | undefined);
+    execute(databaseProvider: IDatabaseProvider): Promise<ResultType | ResultType[]>;
     toSQL(): string;
+    private selectToSQL;
     private sourceToSQL;
     private joinsToSQL;
     private distinctToSQL;

@@ -1,6 +1,7 @@
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
-export declare class CreateQuery {
+export declare function createTable(table: Table<any>): CreateQuery;
+declare class CreateQuery {
     private readonly table;
     constructor(table: Table<any>);
     execute(databaseProvider: IDatabaseProvider): Promise<{
@@ -9,3 +10,4 @@ export declare class CreateQuery {
     }>;
     toSQL(): string;
 }
+export {};

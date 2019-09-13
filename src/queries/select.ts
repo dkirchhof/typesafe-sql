@@ -1,12 +1,12 @@
-import { Column } from "../Column";
+import { AliasedColumn, Column } from "../Column";
 import { GroupBy } from "../GroupBy";
 import { Join, JoinMode } from "../Join";
 import { OrderBy } from "../OrderBy";
 import { Predicate } from "../Predicate";
 import { Projection } from "../Projection";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { Source } from "../Source";
-import { NullableColumns, Table } from "../Table";
+import { AliasedSource } from "../Source";
+import { Columns, NullableColumns, Table } from "../Table";
 
 interface IResultSet { [s: string]: Column<any>; }
 
@@ -14,9 +14,13 @@ type ColumnSelector<RecordType> = (record: RecordType) => Column<any>;
 type PredicateFactory<RecordType> = (record: RecordType) => Predicate<any>;
 type ResultSetFactory<RecordType, ResultSetType extends IResultSet> = (record: RecordType) => ResultSetType;
 
-export class SelectQuery<RecordType> {
+export function from<Type, Alias extends string>(table: Table<Type>, alias: Alias) {
+    return new SelectQuery<Record<Alias, Columns<Type>>>(table, alias);
+}
+
+class SelectQuery<RecordType> {
     protected record: any = { }; // RecordType = { };
-    protected source: Source;
+    protected source: AliasedSource;
     protected joins: Join[] = [];
     protected wheres: Array<Predicate<any>> = [];
     protected havings: Array<Predicate<any>> = [];
@@ -26,7 +30,8 @@ export class SelectQuery<RecordType> {
     protected limitTo?: number;
 
     constructor(table: Table<any>, alias: string) {
-        this.source = new Source(table, alias);
+        this.source = new AliasedSource(table, alias);
+
         this.updateRecord(table, alias);
     }
 
@@ -37,7 +42,7 @@ export class SelectQuery<RecordType> {
 
         const predicate = predicateFactory(this.record);
 
-        this.joins.push(new Join(joinMode, new Source(table, alias), predicate));
+        this.joins.push(new Join(joinMode, new AliasedSource(table, alias), predicate));
         
         return this as any as SelectQuery<JoinedRecordType>;
     }
@@ -101,7 +106,7 @@ export class SelectQuery<RecordType> {
     private updateRecord(table: Table<any>, alias: string) {
         this.record[alias] =
             Object.keys(table.columns)
-                .reduce((prev, column) => ({ ...prev, [column]: new Column(alias, column) }), { });
+                .reduce((prev, column) => ({ ...prev, [column]: new AliasedColumn(alias, column) }), { });
     }
 }
 
@@ -109,7 +114,7 @@ class ExecutableSelectQuery<ResultType> {
 
     constructor(
         private projections: Projection[],
-        private source: Source,
+        private source: AliasedSource,
         private joins: Join[],
         private wheres: Array<Predicate<any>>,
         private havings: Array<Predicate<any>>,
@@ -119,12 +124,7 @@ class ExecutableSelectQuery<ResultType> {
         private limitTo?: number,
     ) { }
 
-    public async getOne(databaseProvider: IDatabaseProvider) {
-        const result = await this.getMany(databaseProvider);
-        return result[0];
-    }
-
-    public async getMany(databaseProvider: IDatabaseProvider) {
+    public async execute(databaseProvider: IDatabaseProvider) {
         const sql = this.toSQL();
 
         return databaseProvider.get(sql) as Promise<ResultType[]>;
@@ -132,7 +132,7 @@ class ExecutableSelectQuery<ResultType> {
 
     public toSQL() {
         const sqlParts: string[] = [
-            `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`,
+            this.selectToSQL(),
             this.sourceToSQL(),
             this.joinsToSQL(),
             this.wheresToSQL(),
@@ -150,6 +150,10 @@ class ExecutableSelectQuery<ResultType> {
     }
 
     // region string methods
+
+    private selectToSQL() {
+        return `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`;
+    }
 
     private sourceToSQL() {
         return `FROM ${this.source}`;

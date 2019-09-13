@@ -1,17 +1,41 @@
-import { convertValueToDB } from "..";
-import { IFilter } from "../Filter";
-import { Operator } from "../Operator";
+import { Column } from "../Column";
+import { Predicate } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
-import { Table } from "../Table";
+import { Source } from "../Source";
+import { Columns, Table } from "../Table";
 import { sanitizeValue } from "../utils";
 
-export class UpdateQuery<Type> {
-    private filters: Array<IFilter<Type, keyof Type>> = [];
+export function update<Type>(table: Table<Type>) {
+    return new UpdateQuery<Type>(table);
+}
 
-    constructor(private table: Table<Type>, private values: Partial<Type>) { }
+class UpdateQuery<Type> {
+    constructor(private table: Table<Type>) { }
 
-    public where<Key extends keyof Type>(column: Key, operator: Operator, value: Type[Key]) {
-        this.filters.push({ column, operator, value });
+    public set(values: Partial<Type>) {
+
+        return new ExecutableUpdateQuery(this.table, values);
+    }
+
+}
+
+class ExecutableUpdateQuery<Type> {
+    private source: Source;
+    private columns: Columns<Type>;
+    private wheres: Array<Predicate<any>> = [];
+
+    constructor(table: Table<Type>, private values: Partial<Type>) {
+        this.source = new Source(table);
+
+        this.columns = Object.keys(table.columns)
+            .reduce((prev, columnName) => ({ ...prev, [columnName]: new Column(columnName) }), { } as Columns<Type>);
+    }
+
+    public where(predicateFactory: (columns: Columns<Type>) => Predicate<any>) {
+        const predicate = predicateFactory(this.columns);
+
+        this.wheres.push(predicate);
+
         return this;
     }
 
@@ -21,28 +45,34 @@ export class UpdateQuery<Type> {
     }
 
     public toSQL() {
-        const values = Object.entries(this.values).map(([column, value]) => {
-            const sourceColumn = this.table.columns[column as keyof Type];
-            const convertedValue = convertValueToDB(sourceColumn, value);
-            const sanitizedValue = sanitizeValue(convertedValue);
+        const sqlParts: string[] = [
+            this.updateToSQL(),
+            this.setValuesToSQL(),
+            this.wheresToSQL(),
+        ];
 
-            return `${column} = ${sanitizedValue}`;
-        }).join(", ");
-
-        let sql = `UPDATE ${this.table.tableName}\n  SET ${values}`;
-
-        if (this.filters.length) {
-            const filters = this.filters.map(filter => {
-                const sourceColumn = this.table.columns[filter.column];
-                const convertedValue = convertValueToDB(sourceColumn, filter.value);
-                const sanitizedValue = sanitizeValue(convertedValue);
-
-                return `${filter.column} ${filter.operator} ${sanitizedValue}`;
-            }).join(" AND ");
-
-            sql = `${sql}\n  WHERE ${filters}`;
-        }
-
-        return sql;
+        // strip out null, undefined and empty strings
+        // and concat strings with linebreak and some spaces
+        return sqlParts
+            .filter(Boolean)
+            .join("\n  ");
     }
+
+    // region string methods
+
+    private updateToSQL() {
+        return `UPDATE ${this.source}`;
+    }
+
+    private setValuesToSQL() {
+        const values = Object.entries(this.values).map(([columnName, value]) => `${columnName} = ${sanitizeValue(value)}`).join(", ");
+
+        return `SET ${values}`;
+    }
+
+    private wheresToSQL() {
+        return this.wheres.length ? `WHERE ${this.wheres.join(" AND ")}` : "";
+    }
+
+    // endregion
 }

@@ -1,11 +1,15 @@
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Table } from "../Table";
 
-export class DropQuery {
+export function dropTable(table: Table<any>) {
+    return new DropQuery(table);
+}
+
+class DropQuery {
     constructor(private readonly table: Table<any>) { }
 
-    public async execute(databaseProvider: IDatabaseProvider) {
-        await databaseProvider.execute(this.toSQL());
+    public execute(databaseProvider: IDatabaseProvider) {
+        return databaseProvider.execute(this.toSQL());
     }
 
     public toSQL() {

@@ -1,18 +1,30 @@
-import { convertValueToDB } from "..";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
+import { Source } from "../Source";
 import { Table } from "../Table";
 import { sanitizeValue } from "../utils";
 
-export class InsertQuery<Type> {
-    private tuples: Type[];
+export function insertInto<Type>(table: Table<Type>) {
+    return new InsertQuery<Type>(table);
+}
 
-    constructor(private table: Table<Type>, tuples: Type | Type[]) {
+class InsertQuery<Type> {
+    private source: Source;
+
+    constructor(table: Table<Type>) {
+        this.source = new Source(table);
+    }
+    
+    public values(tuples: Type | Type[]) {
         if (Array.isArray(tuples)) {
-            this.tuples = tuples;
+            return new ExecutableInsertQuery(this.source, tuples);
         } else {
-            this.tuples = [tuples];
+            return new ExecutableInsertQuery(this.source, [tuples]);
         }
     }
+}
+
+class ExecutableInsertQuery {
+    constructor(private source: Source, private tuples: any[]) { }
 
     public async execute(databaseProvider: IDatabaseProvider) {
         const { lastID } = await databaseProvider.execute(this.toSQL());
@@ -29,6 +41,6 @@ export class InsertQuery<Type> {
 
         }).join(", ");
 
-        return `INSERT INTO ${this.table.tableName}(${columns})\n  VALUES${tuples}`;
+        return `INSERT INTO ${this.source}(${columns})\n  VALUES${tuples}`;
     }
 }
