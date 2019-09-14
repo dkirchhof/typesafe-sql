@@ -9,12 +9,13 @@
   },
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "deep-clone-ts": "^0.1.2"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "tslint": "^5.10.0",
+    "tslint": "^5.20.0",
     "typescript": "^3.6.2"
+  },
+  "peerDependencies": {
+    "sqlite": "^3.0.3"
   },
   "description": ""
 }
