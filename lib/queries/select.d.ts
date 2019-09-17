@@ -12,7 +12,7 @@ interface IResultSet {
 }
 declare type ColumnSelector<RecordType> = (record: RecordType) => Column<any>;
 declare type ResultSetFactory<RecordType, ResultSetType extends IResultSet> = (record: RecordType) => ResultSetType;
-export declare function from<Type, Alias extends string>(table: Table<Type>, alias: Alias): SelectQuery<Record<Alias, Columns<Type>>>;
+export declare function from<Type, Alias extends string = "root">(table: Table<Type>, alias?: Alias): SelectQuery<Record<Alias, Columns<Type>>>;
 declare class SelectQuery<RecordType> {
     protected record: any;
     protected source: AliasedSource;
