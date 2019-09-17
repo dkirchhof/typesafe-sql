@@ -23,8 +23,8 @@ export declare const moreThan: <Type>(columnOrValue1: Type | Column<Type>, colum
 export declare const moreThanOrEqual: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type>;
 export declare const lessThan: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type>;
 export declare const lessThanOrEqual: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type>;
-export declare const isNull: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type | null>;
-export declare const isNotNull: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type | null>;
+export declare const isNull: <Type>(columnOrValue1: Type | Column<Type>) => Predicate<Type | null>;
+export declare const isNotNull: <Type>(columnOrValue1: Type | Column<Type>) => Predicate<Type | null>;
 export declare const like: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type>;
 export declare const notLike: <Type>(columnOrValue1: Type | Column<Type>, columnOrValue2: Type | Column<Type>) => Predicate<Type>;
 export {};

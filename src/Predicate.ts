@@ -63,8 +63,8 @@ export const lessThanOrEqual = <Type>(columnOrValue1: Column<Type> | Type, colum
 // all
 // some
 
-export const isNull = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "IS", null);
-export const isNotNull = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "IS NOT", null);
+export const isNull = <Type>(columnOrValue1: Column<Type> | Type) => new Predicate(columnOrValue1, "IS", null);
+export const isNotNull = <Type>(columnOrValue1: Column<Type> | Type) => new Predicate(columnOrValue1, "IS NOT", null);
 
 export const like = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "LIKE", columnOrValue2);
 export const notLike = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "NOT LIKE", columnOrValue2);
