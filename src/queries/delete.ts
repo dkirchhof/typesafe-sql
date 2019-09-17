@@ -1,5 +1,5 @@
 import { Column } from "../Column";
-import { Predicate, PredicateFactory } from "../Predicate";
+import { Predicate, PredicateFactory, PredicateGroup } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { Source } from "../Source";
 import { Columns, Table } from "../Table";
@@ -11,7 +11,7 @@ export function deleteFrom<Type>(table: Table<Type>) {
 class DeleteQuery<Type> {
     private source: Source;
     private columns: Columns<Type>;
-    private wheres: Array<Predicate<any>> = [];
+    private wheres: Array<Predicate<any> | PredicateGroup> = [];
 
     constructor(table: Table<Type>) { 
         this.source = new Source(table);

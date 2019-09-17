@@ -1,7 +1,7 @@
 import { open } from "sqlite";
 
 import { count } from "../Aggregation";
-import { eq, gt } from "../Predicate";
+import { equal, moreThan, or } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { createTable, deleteFrom, dropTable, from, insertInto, update } from "../queries";
@@ -26,6 +26,8 @@ import { albums, artists, genres } from "./tables";
 
     await selectAlbumsWithArtistAndGenre(databaseProvider);
     await selectGenresWithMoreThan5Albums(databaseProvider);
+    await selectArtist1OrArtist2(databaseProvider);
+
     await updateAlbumName(databaseProvider);
 
     await deleteExample(databaseProvider);
@@ -109,8 +111,8 @@ async function insertAlbums(databaseProvider: IDatabaseProvider) {
 
 async function selectAlbumsWithArtistAndGenre(databaseProvider: IDatabaseProvider) {
     const query = from(albums, "album")
-        .join("LEFT OUTER", artists, "artist", r => eq(r.album.artistId, r.artist.id))
-        .join("LEFT OUTER", genres, "genre", r => eq(r.album.genreId, r.genre.id))
+        .join("LEFT OUTER", artists, "artist", r => equal(r.album.artistId, r.artist.id))
+        .join("LEFT OUTER", genres, "genre", r => equal(r.album.genreId, r.genre.id))
         .select(r => ({ album: r.album.name, artist: r.artist.name, genre: r.genre.name }));
         
     console.log(query.toSQL());
@@ -123,10 +125,26 @@ async function selectAlbumsWithArtistAndGenre(databaseProvider: IDatabaseProvide
 
 async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvider) {
     const query = from(albums, "album")
-        .join("LEFT OUTER", genres, "genre", r => eq(r.album.genreId, r.genre.id))
+        .join("LEFT OUTER", genres, "genre", r => equal(r.album.genreId, r.genre.id))
         .groupBy(r => r.album.genreId)
-        .having(r => gt(count(r.album.id), 5))
+        .having(r => moreThan(count(r.album.id), 5))
         .select(r => ({ genre: r.genre.name, numberOfAlbums: count(r.album.id) }));
+        
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function selectArtist1OrArtist2(databaseProvider: IDatabaseProvider) {
+    const query = from(artists, "artist")
+        .where(r => or(
+            equal(r.artist.id, 1), 
+            equal(r.artist.id, 2),
+        ))
+        .select(r => r.artist);
         
     console.log(query.toSQL());
 
@@ -138,11 +156,11 @@ async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvid
 
 async function updateAlbumName(databaseProvider: IDatabaseProvider) {
     console.log("before");
-    console.log(await from(albums, "album").where(r => eq(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
+    console.log(await from(albums, "album").where(r => equal(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
     
     const query = update(albums)
         .set({ name: "Lost Forever // Lost Together" })
-        .where(r => eq(r.name, "Lost Forever / Lost Together"));
+        .where(r => equal(r.name, "Lost Forever / Lost Together"));
     
     console.log(query.toSQL());
     
@@ -150,14 +168,14 @@ async function updateAlbumName(databaseProvider: IDatabaseProvider) {
     console.log(result);
 
     console.log("after");
-    console.log(await from(albums, "album").where(r => eq(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
+    console.log(await from(albums, "album").where(r => equal(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
 
     console.log();
 }
 
 async function deleteExample(databaseProvider: IDatabaseProvider) {
     const query = deleteFrom(genres)
-        .where(r => eq(r.name, "Punk"));
+        .where(r => equal(r.name, "Punk"));
 
     console.log(query.toSQL());
 

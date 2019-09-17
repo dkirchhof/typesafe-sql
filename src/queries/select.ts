@@ -2,7 +2,7 @@ import { AliasedColumn, Column } from "../Column";
 import { GroupBy } from "../GroupBy";
 import { Join, JoinMode } from "../Join";
 import { OrderBy, OrderDirection } from "../OrderBy";
-import { Predicate, PredicateFactory } from "../Predicate";
+import { Predicate, PredicateFactory, PredicateGroup } from "../Predicate";
 import { Projection } from "../Projection";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { AliasedSource } from "../Source";
@@ -21,8 +21,8 @@ class SelectQuery<RecordType> {
     protected record: any = { }; // RecordType = { };
     protected source: AliasedSource;
     protected joins: Join[] = [];
-    protected wheres: Array<Predicate<any>> = [];
-    protected havings: Array<Predicate<any>> = [];
+    protected wheres: Array<Predicate<any> | PredicateGroup> = [];
+    protected havings: Array<Predicate<any> | PredicateGroup> = [];
     protected groupBys: GroupBy[] = [];
     protected orderBys: OrderBy[] = [];
     protected isDistinct?: boolean;
@@ -115,8 +115,8 @@ class ExecutableSelectQuery<ResultType> {
         private projections: Projection[],
         private source: AliasedSource,
         private joins: Join[],
-        private wheres: Array<Predicate<any>>,
-        private havings: Array<Predicate<any>>,
+        private wheres: Array<Predicate<any> | PredicateGroup>,
+        private havings: Array<Predicate<any> | PredicateGroup>,
         private groupBys: GroupBy[], 
         private orderBys: OrderBy[],
         private isDistinct?: boolean,
