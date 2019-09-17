@@ -1,7 +1,7 @@
 import { Column } from "./Column";
 
 export class Projection {
-    constructor(private column: Column<any>, private alias: string) { }
+    constructor(public column: Column<any>, public alias: string) { }
 
     public toString() {
         return `${this.column} AS ${this.alias}`;

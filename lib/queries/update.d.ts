@@ -12,7 +12,7 @@ declare class ExecutableUpdateQuery<Type> {
     private source;
     private columns;
     private wheres;
-    constructor(table: Table<Type>, values: Partial<Type>);
+    constructor(table: Table<any>, values: Partial<Type>);
     where(predicateFactory: PredicateFactory<Columns<Type>>): this;
     execute(databaseProvider: IDatabaseProvider): Promise<number>;
     toSQL(): string;

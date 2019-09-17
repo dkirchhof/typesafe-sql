@@ -35,9 +35,17 @@ class ExecutableInsertQuery {
         const columns = Object.keys(this.tuples[0]).join(", ");
 
         const tuples = this.tuples.map(tuple => {
-            const sanitizedValues = Object.values(tuple).map(value => sanitizeValue(value)).join(", ");
+            const values = Object.entries(tuple).map(([columnName, value]) => {
+                const { converter } = this.source.table.columns[columnName];
+                
+                const convertedValue = converter ? converter.toDB(value) : value;
+                const sanitizedValue = sanitizeValue(convertedValue);
 
-            return `(${sanitizedValues})`;
+                return sanitizedValue;
+
+            }).join(", ");
+
+            return `(${values})`;
 
         }).join(", ");
 

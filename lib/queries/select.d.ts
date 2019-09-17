@@ -46,6 +46,7 @@ declare class ExecutableSelectQuery<ResultType> {
     constructor(projections: Projection[], source: AliasedSource, joins: Join[], wheres: Array<Predicate<any> | PredicateGroup>, havings: Array<Predicate<any> | PredicateGroup>, groupBys: GroupBy[], orderBys: OrderBy[], isDistinct?: boolean | undefined, limitTo?: number | undefined);
     execute(databaseProvider: IDatabaseProvider): Promise<ResultType[]>;
     toSQL(): string;
+    private getColumnOptionsByAlias;
     private selectToSQL;
     private sourceToSQL;
     private joinsToSQL;

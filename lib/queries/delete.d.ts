@@ -6,7 +6,7 @@ declare class DeleteQuery<Type> {
     private source;
     private columns;
     private wheres;
-    constructor(table: Table<Type>);
+    constructor(table: Table<any>);
     where(predicateFactory: PredicateFactory<Columns<Type>>): this;
     execute(databaseProvider: IDatabaseProvider): Promise<number>;
     toSQL(): string;

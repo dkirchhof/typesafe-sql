@@ -34,3 +34,13 @@ export const albums = new Table<IAlbum>("albums", {
     artistId: { dataType: "INTEGER", references: new ForeignKey(artists, "id", "CASCADE") },
     genreId: { dataType: "INTEGER", references: new ForeignKey(genres, "id", "CASCADE") },
 });
+
+export const test = new Table<{ date: Date }>("test", {
+    date: {
+        converter: { 
+            toDB: date => date.getTime(),
+            toJS: date => new Date(date),
+        },
+        dataType: "INTEGER",
+    },
+});

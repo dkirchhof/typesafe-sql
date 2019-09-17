@@ -4,6 +4,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "compile": "tsc",
+    "dev": "tsc -w",
     "example": "node ./lib/example/index.js"
   },
   "author": "",

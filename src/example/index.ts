@@ -1,12 +1,12 @@
 import { open } from "sqlite";
 
 import { count } from "../Aggregation";
-import { equal, moreThan, or } from "../Predicate";
+import { equal, moreThan, or, notEqual } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { createTable, deleteFrom, dropTable, from, insertInto, update } from "../queries";
 import { Table } from "../Table";
-import { albums, artists, genres } from "./tables";
+import { albums, artists, genres, test } from "./tables";
 
 (async () => {
     // const db = await open("testDatabase/db.db");
@@ -30,10 +30,16 @@ import { albums, artists, genres } from "./tables";
 
     await updateAlbumName(databaseProvider);
 
-    await deleteExample(databaseProvider);
+    await deleteGenrePunk(databaseProvider);
     await selectAlbumsWithArtistAndGenre(databaseProvider);
     
-    await dropExample(databaseProvider);
+    await dropAlbumsTable(databaseProvider);
+
+    // converter test
+    await createExampleTable(test, databaseProvider);
+    await insertDateToTestTable(databaseProvider);
+    await updateDateInTestTable(databaseProvider);
+    await getDateFromTestTable(databaseProvider);
 
     db.close();
 })();
@@ -173,7 +179,7 @@ async function updateAlbumName(databaseProvider: IDatabaseProvider) {
     console.log();
 }
 
-async function deleteExample(databaseProvider: IDatabaseProvider) {
+async function deleteGenrePunk(databaseProvider: IDatabaseProvider) {
     const query = deleteFrom(genres)
         .where(r => equal(r.name, "Punk"));
 
@@ -185,8 +191,45 @@ async function deleteExample(databaseProvider: IDatabaseProvider) {
     console.log();
 }
 
-async function dropExample(databaseProvider: IDatabaseProvider) {
+async function dropAlbumsTable(databaseProvider: IDatabaseProvider) {
     const query = dropTable(albums);
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function insertDateToTestTable(databaseProvider: IDatabaseProvider) {
+    const query = insertInto(test)
+        .values({ date: new Date() });
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function getDateFromTestTable(databaseProvider: IDatabaseProvider) {
+    const query = from(test)
+        .where(r => moreThan(r.root.date, new Date(0)))
+        .select(r => r.root);
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function updateDateInTestTable(databaseProvider: IDatabaseProvider) {
+    const query = update(test)
+        .set({ date: new Date("2018-01-01") });
+
     console.log(query.toSQL());
 
     const result = await query.execute(databaseProvider);

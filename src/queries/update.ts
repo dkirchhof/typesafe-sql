@@ -13,10 +13,8 @@ class UpdateQuery<Type> {
     constructor(private table: Table<Type>) { }
 
     public set(values: Partial<Type>) {
-
         return new ExecutableUpdateQuery(this.table, values);
     }
-
 }
 
 class ExecutableUpdateQuery<Type> {
@@ -24,11 +22,11 @@ class ExecutableUpdateQuery<Type> {
     private columns: Columns<Type>;
     private wheres: Array<Predicate<any> | PredicateGroup> = [];
 
-    constructor(table: Table<Type>, private values: Partial<Type>) {
+    constructor(table: Table<any>, private values: Partial<Type>) {
         this.source = new Source(table);
 
-        this.columns = Object.keys(table.columns)
-            .reduce((prev, columnName) => ({ ...prev, [columnName]: new Column(columnName) }), { } as Columns<Type>);
+        this.columns = Object.entries(table.columns)
+            .reduce((prev, [columnName, columnOptions]) => ({ ...prev, [columnName]: new Column(columnName, columnOptions) }), { } as Columns<Type>);
     }
 
     public where(predicateFactory: PredicateFactory<Columns<Type>>) {
@@ -65,7 +63,15 @@ class ExecutableUpdateQuery<Type> {
     }
 
     private setValuesToSQL() {
-        const values = Object.entries(this.values).map(([columnName, value]) => `${columnName} = ${sanitizeValue(value)}`).join(", ");
+        const values = Object.entries(this.values).map(([columnName, value]) => {
+            const { converter } = this.source.table.columns[columnName];
+                
+            const convertedValue = converter ? converter.toDB(value) : value;
+            const sanitizedValue = sanitizeValue(convertedValue);
+
+            return `${columnName} = ${sanitizedValue}`;
+
+        }).join(", ");
 
         return `SET ${values}`;
     }

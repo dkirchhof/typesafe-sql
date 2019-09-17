@@ -6,6 +6,7 @@ export interface IColumnOptions<Type> {
     notNull?: boolean;
     unique?: boolean;
     default?: Type;
+    converter?: IConverter<Type, any>;
 }
 export declare class ForeignKey<Type> {
     readonly table: Table<Type>;
@@ -16,6 +17,10 @@ export declare class ForeignKey<Type> {
 }
 export declare type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
 export declare type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE";
+export interface IConverter<JSType, DBType> {
+    toDB: (input: JSType) => DBType;
+    toJS: (input: DBType) => JSType;
+}
 export declare type ColumnOptions<Type> = {
     [K in keyof Type]: IColumnOptions<Type[K]>;
 };

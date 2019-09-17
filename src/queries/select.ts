@@ -104,8 +104,8 @@ class SelectQuery<RecordType> {
 
     private updateRecord(table: Table<any>, alias: string) {
         this.record[alias] =
-            Object.keys(table.columns)
-                .reduce((prev, column) => ({ ...prev, [column]: new AliasedColumn(alias, column) }), { });
+            Object.entries(table.columns)
+                .reduce((prev, [columnName, columnOptions]) => ({ ...prev, [columnName]: new AliasedColumn(alias, columnName, columnOptions) }), { });
     }
 }
 
@@ -125,8 +125,19 @@ class ExecutableSelectQuery<ResultType> {
 
     public async execute(databaseProvider: IDatabaseProvider) {
         const sql = this.toSQL();
+        const rawTuples = await databaseProvider.get(sql) as any[];
 
-        return databaseProvider.get(sql) as Promise<ResultType[]>;
+        return rawTuples.map(tuple => 
+            Object.entries(tuple).reduce((jsTuple, [alias, value]) => {
+                const { converter } = this.getColumnOptionsByAlias(alias);
+
+                return {
+                    ...jsTuple,
+                    [alias]: converter ? converter.toJS(value) : value,
+                };
+
+            }, { } as ResultType),
+        );
     }
 
     public toSQL() {
@@ -146,6 +157,10 @@ class ExecutableSelectQuery<ResultType> {
         return sqlParts
             .filter(Boolean)
             .join("\n  ");
+    }
+
+    private getColumnOptionsByAlias(alias: string) {
+        return this.projections.find(p => p.alias === alias)!.column.options;
     }
 
     // region string methods

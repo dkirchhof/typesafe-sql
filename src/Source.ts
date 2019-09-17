@@ -1,14 +1,14 @@
 import { Table } from ".";
 
 export class Source {
-    constructor(protected table: Table<any>) { }
+    constructor(public table: Table<any>) { }
 
     public toString() {
         return this.table.tableName;
     }
 }
 export class AliasedSource extends Source {
-    constructor(table: Table<any>, private alias: string) { 
+    constructor(table: Table<any>, public alias: string) { 
         super(table);
     }
 

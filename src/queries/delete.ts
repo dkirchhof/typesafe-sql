@@ -13,11 +13,11 @@ class DeleteQuery<Type> {
     private columns: Columns<Type>;
     private wheres: Array<Predicate<any> | PredicateGroup> = [];
 
-    constructor(table: Table<Type>) { 
+    constructor(table: Table<any>) { 
         this.source = new Source(table);
 
-        this.columns = Object.keys(table.columns)
-            .reduce((prev, columnName) => ({ ...prev, [columnName]: new Column(columnName) }), { } as Columns<Type>);
+        this.columns = Object.entries(table.columns)
+            .reduce((prev, [columnName, columnOptions]) => ({ ...prev, [columnName]: new Column(columnName, columnOptions) }), { } as Columns<Type>);
     }
 
     public where(predicateFactory: PredicateFactory<Columns<Type>>) {

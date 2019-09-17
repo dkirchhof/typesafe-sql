@@ -1,11 +1,13 @@
+import { IColumnOptions } from "./Table";
 export declare class Column<Type> {
-    protected readonly columnName: string;
+    readonly name: string;
+    readonly options: IColumnOptions<any>;
     private type?;
-    constructor(columnName: string);
+    constructor(name: string, options: IColumnOptions<any>);
     toString(): string;
 }
 export declare class AliasedColumn<Type> extends Column<Type> {
-    private readonly tableAlias;
-    constructor(tableAlias: string, columnName: string);
+    readonly tableAlias: string;
+    constructor(tableAlias: string, name: string, options: IColumnOptions<any>);
     toString(): string;
 }
