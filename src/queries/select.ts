@@ -13,8 +13,8 @@ interface IResultSet { [s: string]: Column<any>; }
 type ColumnSelector<RecordType> = (record: RecordType) => Column<any>;
 type ResultSetFactory<RecordType, ResultSetType extends IResultSet> = (record: RecordType) => ResultSetType;
 
-export function from<Type, Alias extends string>(table: Table<Type>, alias: Alias) {
-    return new SelectQuery<Record<Alias, Columns<Type>>>(table, alias);
+export function from<Type, Alias extends string = "root">(table: Table<Type>, alias?: Alias) {
+    return new SelectQuery<Record<Alias, Columns<Type>>>(table, alias || "root");
 }
 
 class SelectQuery<RecordType> {
