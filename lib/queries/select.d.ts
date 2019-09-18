@@ -24,7 +24,7 @@ declare class SelectQuery<RecordType> {
     protected isDistinct?: boolean;
     protected limitTo?: number;
     constructor(table: Table<any>, alias: string);
-    join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, NullableColumns<JoinedType>>>(joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory: PredicateFactory<JoinedRecordType>): SelectQuery<JoinedRecordType>;
+    join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, NullableColumns<JoinedType>>>(joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>): SelectQuery<JoinedRecordType>;
     where(predicateFactory: PredicateFactory<RecordType>): this;
     having(predicateFactory: PredicateFactory<RecordType>): this;
     groupBy(columnSelector: ColumnSelector<RecordType>): this;

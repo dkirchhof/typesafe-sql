@@ -5,6 +5,6 @@ export declare class Join {
     private joinMode;
     private readonly source;
     private predicate;
-    constructor(joinMode: JoinMode, source: AliasedSource, predicate: Predicate<any> | PredicateGroup);
+    constructor(joinMode: JoinMode, source: AliasedSource, predicate: Predicate<any> | PredicateGroup | null);
     toString(): string;
 }

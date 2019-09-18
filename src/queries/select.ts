@@ -35,11 +35,11 @@ class SelectQuery<RecordType> {
     }
 
     public join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, NullableColumns<JoinedType>>>(
-        joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory: PredicateFactory<JoinedRecordType>,
+        joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>,
     ) {
         this.updateRecord(table, alias);
 
-        const predicate = predicateFactory(this.record);
+        const predicate = predicateFactory ? predicateFactory(this.record) : null;
 
         this.joins.push(new Join(joinMode, new AliasedSource(table, alias), predicate));
         
