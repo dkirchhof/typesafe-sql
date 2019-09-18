@@ -17,8 +17,8 @@ declare class SelectQuery<RecordType> {
     protected record: any;
     protected source: AliasedSource;
     protected joins: Join[];
-    protected wheres: Array<Predicate<any> | PredicateGroup>;
-    protected havings: Array<Predicate<any> | PredicateGroup>;
+    protected wheres: Array<Predicate | PredicateGroup>;
+    protected havings: Array<Predicate | PredicateGroup>;
     protected groupBys: GroupBy[];
     protected orderBys: OrderBy[];
     protected isDistinct?: boolean;
@@ -43,7 +43,7 @@ declare class ExecutableSelectQuery<ResultType> {
     private orderBys;
     private isDistinct?;
     private limitTo?;
-    constructor(projections: Projection[], source: AliasedSource, joins: Join[], wheres: Array<Predicate<any> | PredicateGroup>, havings: Array<Predicate<any> | PredicateGroup>, groupBys: GroupBy[], orderBys: OrderBy[], isDistinct?: boolean | undefined, limitTo?: number | undefined);
+    constructor(projections: Projection[], source: AliasedSource, joins: Join[], wheres: Array<Predicate | PredicateGroup>, havings: Array<Predicate | PredicateGroup>, groupBys: GroupBy[], orderBys: OrderBy[], isDistinct?: boolean | undefined, limitTo?: number | undefined);
     execute(databaseProvider: IDatabaseProvider): Promise<ResultType[]>;
     toSQL(): string;
     private getColumnOptionsByAlias;

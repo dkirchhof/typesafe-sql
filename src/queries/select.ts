@@ -21,8 +21,8 @@ class SelectQuery<RecordType> {
     protected record: any = { }; // RecordType = { };
     protected source: AliasedSource;
     protected joins: Join[] = [];
-    protected wheres: Array<Predicate<any> | PredicateGroup> = [];
-    protected havings: Array<Predicate<any> | PredicateGroup> = [];
+    protected wheres: Array<Predicate | PredicateGroup> = [];
+    protected havings: Array<Predicate | PredicateGroup> = [];
     protected groupBys: GroupBy[] = [];
     protected orderBys: OrderBy[] = [];
     protected isDistinct?: boolean;
@@ -115,8 +115,8 @@ class ExecutableSelectQuery<ResultType> {
         private projections: Projection[],
         private source: AliasedSource,
         private joins: Join[],
-        private wheres: Array<Predicate<any> | PredicateGroup>,
-        private havings: Array<Predicate<any> | PredicateGroup>,
+        private wheres: Array<Predicate | PredicateGroup>,
+        private havings: Array<Predicate | PredicateGroup>,
         private groupBys: GroupBy[], 
         private orderBys: OrderBy[],
         private isDistinct?: boolean,

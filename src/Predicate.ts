@@ -1,13 +1,15 @@
 import { Column } from "./Column";
+import { IConverter } from "./Table";
 import { sanitizeValue } from "./utils";
 
-type Operator = "=" | "<>" | ">" | ">=" | "<" | "<=" | "IS" | "IS NOT" | "LIKE" | "NOT LIKE";
+type SingleValueOperator = "=" | "<>" | ">" | ">=" | "<" | "<=" | "IS" | "IS NOT" | "LIKE" | "NOT LIKE";
+type MultiValueOperator = "IN" | "NOT IN";
 type BooleanOperator = "AND" | "OR";
 
 export class PredicateGroup {
-    private readonly operands: Array<Predicate<any>>;
+    private readonly operands: Predicate[];
 
-    constructor(private readonly operator: BooleanOperator, ...operands: Array<Predicate<any>>) {
+    constructor(private readonly operator: BooleanOperator, ...operands: Predicate[]) {
         this.operands = operands;
     }
 
@@ -16,45 +18,67 @@ export class PredicateGroup {
     }
 }
 
-export function and(...operands: Array<Predicate<any>>) {
-    return new PredicateGroup("AND", ...operands);
+export function and(...predicates: Predicate[]) {
+    return new PredicateGroup("AND", ...predicates);
 }
 
-export function or(...operands: Array<Predicate<any>>) {
-    return new PredicateGroup("OR", ...operands);
+export function or(...predicates: Predicate[]) {
+    return new PredicateGroup("OR", ...predicates);
 }
 
-export class Predicate<Type> {
-    constructor(private readonly columnOrValue1: Column<Type> | Type, private readonly operator: Operator, private readonly columnOrValue2: Column<Type> | Type) {
+export abstract class Predicate {
+    protected convertAndSanizizeColumnOrValue(converter: IConverter<any, any> | undefined) {
+        return (columnOrValue: any) => {
+            if (columnOrValue instanceof Column) {
+                return columnOrValue;
+            }
+            
+            const convertedValue = converter ? converter.toDB(columnOrValue) : columnOrValue;
+            const convertedAndSanitizedValue = sanitizeValue(convertedValue);
+            
+            return convertedAndSanitizedValue;
+        };
+    }
+}
 
+export class SingleValuePredicate<Type> extends Predicate {
+    constructor(private readonly column: Column<Type>, private readonly operator: SingleValueOperator, private readonly columnOrValue: Column<Type> | Type) { 
+        super();
     }
 
     public toString() {
-        const converter1 = this.columnOrValue2 instanceof Column ? this.columnOrValue2.options.converter : null;
-        const converter2 = this.columnOrValue1 instanceof Column ? this.columnOrValue1.options.converter : null;
+        const convertAndSanitize = this.convertAndSanizizeColumnOrValue(this.column.options.converter);
+        const convertedAndSanitizedColumnOrValue = convertAndSanitize(this.columnOrValue);
 
-        const convertedColumnOrValue1 = converter1 ? converter1.toDB(this.columnOrValue1) : this.columnOrValue1;
-        const convertedColumnOrValue2 = converter2 ? converter2.toDB(this.columnOrValue2) : this.columnOrValue2;
-
-        const sanitizedColumnOrValue1 = sanitizeValue(convertedColumnOrValue1);
-        const sanitizedColumnOrValue2 = sanitizeValue(convertedColumnOrValue2);
-
-        return `${sanitizedColumnOrValue1} ${this.operator} ${sanitizedColumnOrValue2}`;
+        return `${this.column} ${this.operator} ${convertedAndSanitizedColumnOrValue}`;
     }
 }
 
-export type PredicateFactory<Columns> = (columns: Columns) => Predicate<any> | PredicateGroup;
+export class InPredicate<Type> extends Predicate {
+    constructor(private readonly column: Column<Type>, private readonly operator: MultiValueOperator, private readonly columnsOrValues: Array<Column<Type> | Type>) { 
+        super();
+    }
 
-export const equal = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "=", columnOrValue2);
-export const notEqual = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "<>", columnOrValue2);
+    public toString() {
+        const convertAndSanitize = this.convertAndSanizizeColumnOrValue(this.column.options.converter);
+        const convertedAndSanitizedColumnsOrValues = this.columnsOrValues.map(convertAndSanitize);
 
-export const moreThan = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, ">", columnOrValue2);
-export const moreThanOrEqual = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, ">=", columnOrValue2);
-export const lessThan = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "<", columnOrValue2);
-export const lessThanOrEqual = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "<=", columnOrValue2);
+        return `${this.column} ${this.operator} (${convertedAndSanitizedColumnsOrValues.join(", ")})`;
+    }
+}
 
-// export const iin = <Type extends ColumnOrValueType>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "IN", columnOrValue2);
-// export const nin = <Type extends ColumnOrValueType>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "NOT IN", columnOrValue2);
+export type PredicateFactory<Columns> = (columns: Columns) => Predicate | PredicateGroup;
+
+export const equal = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "=", columnOrValue);
+export const notEqual = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "<>", columnOrValue);
+
+export const moreThan = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, ">", columnOrValue);
+export const moreThanOrEqual = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, ">=", columnOrValue);
+export const lessThan = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "<", columnOrValue);
+export const lessThanOrEqual = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "<=", columnOrValue);
+
+export const isIn = <Type>(column: Column<Type>, values: Type[]) => new InPredicate(column, "IN", values);
+export const notIn = <Type>(column: Column<Type>, values: Type[]) => new InPredicate(column, "NOT IN", values);
 
 // between
 
@@ -63,8 +87,8 @@ export const lessThanOrEqual = <Type>(columnOrValue1: Column<Type> | Type, colum
 // all
 // some
 
-export const isNull = <Type>(columnOrValue1: Column<Type> | Type) => new Predicate(columnOrValue1, "IS", null);
-export const isNotNull = <Type>(columnOrValue1: Column<Type> | Type) => new Predicate(columnOrValue1, "IS NOT", null);
+export const isNull = <Type>(column: Column<Type>) => new SingleValuePredicate(column, "IS", null);
+export const isNotNull = <Type>(column: Column<Type>) => new SingleValuePredicate(column, "IS NOT", null);
 
-export const like = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "LIKE", columnOrValue2);
-export const notLike = <Type>(columnOrValue1: Column<Type> | Type, columnOrValue2: Column<Type> | Type) => new Predicate(columnOrValue1, "NOT LIKE", columnOrValue2);
+export const like = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "LIKE", columnOrValue);
+export const notLike = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "NOT LIKE", columnOrValue);

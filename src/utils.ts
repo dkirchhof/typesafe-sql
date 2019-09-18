@@ -1,4 +1,4 @@
-export function sanitizeValue(value: any): string | null {
+export function sanitizeValue(value: any): string {
     if (typeof value === "string") {
         return `'${value}'`;
     }

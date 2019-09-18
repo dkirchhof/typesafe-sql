@@ -11,7 +11,7 @@ export function deleteFrom<Type>(table: Table<Type>) {
 class DeleteQuery<Type> {
     private source: Source;
     private columns: Columns<Type>;
-    private wheres: Array<Predicate<any> | PredicateGroup> = [];
+    private wheres: Array<Predicate | PredicateGroup> = [];
 
     constructor(table: Table<any>) { 
         this.source = new Source(table);

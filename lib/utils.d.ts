@@ -1,1 +1,1 @@
-export declare function sanitizeValue(value: any): string | null;
+export declare function sanitizeValue(value: any): string;

@@ -20,7 +20,7 @@ class UpdateQuery<Type> {
 class ExecutableUpdateQuery<Type> {
     private source: Source;
     private columns: Columns<Type>;
-    private wheres: Array<Predicate<any> | PredicateGroup> = [];
+    private wheres: Array<Predicate | PredicateGroup> = [];
 
     constructor(table: Table<any>, private values: Partial<Type>) {
         this.source = new Source(table);
