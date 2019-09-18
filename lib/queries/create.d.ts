@@ -9,5 +9,6 @@ declare class CreateQuery {
         lastID: number;
     }>;
     toSQL(): string;
+    private columnsToSQL;
 }
 export {};

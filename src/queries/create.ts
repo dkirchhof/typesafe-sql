@@ -13,31 +13,29 @@ class CreateQuery {
     }
 
     public toSQL() {
-        const columns = Object.entries(this.table.columns).map(([columnName, options]) => {
+        const openStmt = `CREATE TABLE ${this.table.tableName} (`;
+
+        const columns = this.columnsToSQL().join(",\n  ");
+        const constraints = this.table.constraints.join(",\n  ");
+
+        const centerParts = [columns, constraints].filter(Boolean).join(",\n  ");
+
+        return `${openStmt}\n  ${centerParts}\n)`;
+    }
+
+    private columnsToSQL() {
+        return Object.entries(this.table.columns).map(([columnName, options]) => {
             let sql = `${columnName} ${options.dataType}`;
 
             if (options.unique) {
                 sql += ` UNIQUE`;
             }
 
-            if (options.notNull) {
+            if (options.nullable !== false) {
                 sql += ` NOT NULL`;
-            }
-
-            if (options.references) {
-                sql += ` ${options.references}`;
             }
 
             return sql;
         });
-
-        let primaryConstraint = "";
-        const primaryColumns = Object.entries(this.table.columns).filter(([, options]) => options.primary);
-
-        if (primaryColumns.length) {
-            primaryConstraint = `,\n  PRIMARY KEY (${primaryColumns.map(([columnName]) => columnName).join(", ")})`;
-        }
-
-        return `CREATE TABLE ${this.table.tableName} (\n  ${columns.join(",\n  ")}${primaryConstraint}\n)`;
     }
 }

@@ -1,4 +1,4 @@
-import { ForeignKey, Table } from "../Table";
+import { ForeignKey, PrimaryKey, Table } from "../Table";
 
 interface IAlbum {
     id: number;
@@ -18,26 +18,34 @@ interface IArtist {
 }
 
 export const artists = new Table<IArtist>("artists", {
-    id: { dataType: "INTEGER", primary: true },
+    id: { dataType: "INTEGER" },
     name: { dataType: "TEXT" },
-});
+}, [
+    new PrimaryKey("id"),
+]);
 
 export const genres = new Table<IGenre>("genres", {
-    id: { dataType: "INTEGER", primary: true },
+    id: { dataType: "INTEGER" },
     name: { dataType: "TEXT" },
-});
+}, [
+    new PrimaryKey("id"),
+]);
 
 export const albums = new Table<IAlbum>("albums", {
-    id: { dataType: "INTEGER", primary: true },
+    id: { dataType: "INTEGER" },
     name: { dataType: "TEXT" },
 
-    artistId: { dataType: "INTEGER", references: new ForeignKey(() => artists, "id", "CASCADE") },
-    genreId: { dataType: "INTEGER", references: new ForeignKey(() => genres, "id", "CASCADE") },
-});
+    artistId: { dataType: "INTEGER" },
+    genreId: { dataType: "INTEGER" },
+}, [
+    new PrimaryKey("id"),
+    new ForeignKey("artistId", artists, "id", "CASCADE"),
+    new ForeignKey("genreId", genres, "id", "CASCADE"),
+]);
 
 export const test = new Table<{ date: Date }>("test", {
     date: {
-        converter: { 
+        converter: {
             toDB: date => date.getTime(),
             toJS: date => new Date(date),
         },

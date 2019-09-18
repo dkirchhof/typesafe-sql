@@ -1,24 +1,41 @@
 import { Column } from "./Column";
+import { toArray } from "./utils";
 
 export interface IColumnOptions<Type> {
     dataType: DataType;
-    primary?: boolean;
-    references?: ForeignKey<any>;
-    notNull?: boolean;
+    nullable?: boolean;
     unique?: boolean;
     default?: Type;
     converter?: IConverter<Type, any>;
 }
 
-export class ForeignKey<Type> {
-    private readonly table: Table<Type>;
+export abstract class KeyConstraint<Type> {
+    protected readonly myColumns: Array<keyof Type>;
 
-    constructor(tableSelector: () => Table<Type>, private readonly column: keyof Type, private readonly onDelete: Action = "NO ACTION", private readonly onUpdate: Action = "NO ACTION") { 
-        this.table = tableSelector();
+    constructor(columns: keyof Type | Array<keyof Type>) { 
+        this.myColumns = toArray(columns);
+    }
+}
+
+export class PrimaryKey<Type> extends KeyConstraint<Type> {
+    public toString() {
+        return `PRIMARY KEY (${this.myColumns.join(", ")})`;
+    }
+}
+
+export class ForeignKey<MyType, ReferencedType> extends KeyConstraint<MyType> {
+    private readonly referencedTable: Table<ReferencedType>;
+    private readonly referencedColumns: Array<keyof ReferencedType>;
+    
+    constructor(myColumns: keyof MyType | Array<keyof MyType>, tableSelector: Table<ReferencedType>, referencedColumns: keyof ReferencedType | Array<keyof ReferencedType>, private readonly onDelete: Action = "NO ACTION", private readonly onUpdate: Action = "NO ACTION") { 
+        super(myColumns);
+
+        this.referencedTable = tableSelector;//();
+        this.referencedColumns = toArray(referencedColumns);
     }
 
     public toString() {
-        return `REFERENCES ${this.table.tableName}(${this.column}) ON DELETE ${this.onDelete} ON UPDATE ${this.onUpdate}`;
+        return `FOREIGN KEY (${this.myColumns.join(", ")}) REFERENCES ${this.referencedTable.tableName}(${this.referencedColumns.join(", ")}) ON DELETE ${this.onDelete} ON UPDATE ${this.onUpdate}`;
     }
 }
 
@@ -36,5 +53,5 @@ export type Columns<Type> = { [K in keyof Type]-?: Column<Type[K]>; };
 export type NullableColumns<Type> = { [K in keyof Type]-?: Column<Type[K] | null>; };
 
 export class Table<Type> {
-    constructor(public readonly tableName: string, public columns: ColumnOptions<Type>) { }
+    constructor(public readonly tableName: string, public columns: ColumnOptions<Type>, public constraints: Array<PrimaryKey<Type> | ForeignKey<Type, any>> = []) { }
 }

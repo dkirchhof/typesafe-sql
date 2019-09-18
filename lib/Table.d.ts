@@ -1,19 +1,24 @@
 import { Column } from "./Column";
 export interface IColumnOptions<Type> {
     dataType: DataType;
-    primary?: boolean;
-    references?: ForeignKey<any>;
-    notNull?: boolean;
+    nullable?: boolean;
     unique?: boolean;
     default?: Type;
     converter?: IConverter<Type, any>;
 }
-export declare class ForeignKey<Type> {
-    private readonly column;
+export declare abstract class KeyConstraint<Type> {
+    protected readonly myColumns: Array<keyof Type>;
+    constructor(columns: keyof Type | Array<keyof Type>);
+}
+export declare class PrimaryKey<Type> extends KeyConstraint<Type> {
+    toString(): string;
+}
+export declare class ForeignKey<MyType, ReferencedType> extends KeyConstraint<MyType> {
     private readonly onDelete;
     private readonly onUpdate;
-    private readonly table;
-    constructor(tableSelector: () => Table<Type>, column: keyof Type, onDelete?: Action, onUpdate?: Action);
+    private readonly referencedTable;
+    private readonly referencedColumns;
+    constructor(myColumns: keyof MyType | Array<keyof MyType>, tableSelector: Table<ReferencedType>, referencedColumns: keyof ReferencedType | Array<keyof ReferencedType>, onDelete?: Action, onUpdate?: Action);
     toString(): string;
 }
 export declare type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
@@ -34,5 +39,6 @@ export declare type NullableColumns<Type> = {
 export declare class Table<Type> {
     readonly tableName: string;
     columns: ColumnOptions<Type>;
-    constructor(tableName: string, columns: ColumnOptions<Type>);
+    constraints: Array<PrimaryKey<Type> | ForeignKey<Type, any>>;
+    constructor(tableName: string, columns: ColumnOptions<Type>, constraints?: Array<PrimaryKey<Type> | ForeignKey<Type, any>>);
 }
