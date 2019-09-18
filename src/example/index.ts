@@ -1,7 +1,7 @@
 import { open } from "sqlite";
 
 import { count } from "../Aggregation";
-import { equal, moreThan, or, notEqual } from "../Predicate";
+import { equal, moreThan, or } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { createTable, deleteFrom, dropTable, from, insertInto, update } from "../queries";

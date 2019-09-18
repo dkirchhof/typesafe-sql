@@ -25,12 +25,7 @@ class CreateQuery {
             }
 
             if (options.references) {
-                const foreignTable = options.references.table.tableName;
-                const foreignColumn = options.references.column;
-                const onDelete = options.references.onDelete || "NO ACTION";
-                const onUpdate = options.references.onUpdate || "NO ACTION";
-
-                sql += ` REFERENCES ${foreignTable}(${foreignColumn.toString()}) ON DELETE ${onDelete} ON UPDATE ${onUpdate}`;
+                sql += ` ${options.references}`;
             }
 
             return sql;

@@ -9,11 +9,12 @@ export interface IColumnOptions<Type> {
     converter?: IConverter<Type, any>;
 }
 export declare class ForeignKey<Type> {
-    readonly table: Table<Type>;
-    readonly column: keyof Type;
-    readonly onDelete?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined;
-    readonly onUpdate?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined;
-    constructor(table: Table<Type>, column: keyof Type, onDelete?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined, onUpdate?: "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE" | undefined);
+    private readonly column;
+    private readonly onDelete;
+    private readonly onUpdate;
+    private readonly table;
+    constructor(tableSelector: () => Table<Type>, column: keyof Type, onDelete?: Action, onUpdate?: Action);
+    toString(): string;
 }
 export declare type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
 export declare type Action = "NO ACTION" | "RESTRICT" | "SET NULL" | "SET DEFAULT" | "CASCADE";

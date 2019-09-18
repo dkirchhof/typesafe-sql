@@ -31,8 +31,8 @@ export const albums = new Table<IAlbum>("albums", {
     id: { dataType: "INTEGER", primary: true },
     name: { dataType: "TEXT" },
 
-    artistId: { dataType: "INTEGER", references: new ForeignKey(artists, "id", "CASCADE") },
-    genreId: { dataType: "INTEGER", references: new ForeignKey(genres, "id", "CASCADE") },
+    artistId: { dataType: "INTEGER", references: new ForeignKey(() => artists, "id", "CASCADE") },
+    genreId: { dataType: "INTEGER", references: new ForeignKey(() => genres, "id", "CASCADE") },
 });
 
 export const test = new Table<{ date: Date }>("test", {

@@ -11,7 +11,15 @@ export interface IColumnOptions<Type> {
 }
 
 export class ForeignKey<Type> {
-    constructor(readonly table: Table<Type>, readonly column: keyof Type, readonly onDelete?: Action, readonly onUpdate?: Action) { }
+    private readonly table: Table<Type>;
+
+    constructor(tableSelector: () => Table<Type>, private readonly column: keyof Type, private readonly onDelete: Action = "NO ACTION", private readonly onUpdate: Action = "NO ACTION") { 
+        this.table = tableSelector();
+    }
+
+    public toString() {
+        return `REFERENCES ${this.table.tableName}(${this.column}) ON DELETE ${this.onDelete} ON UPDATE ${this.onUpdate}`;
+    }
 }
 
 export type DataType = "NULL" | "INTEGER" | "REAL" | "TEXT" | "BLOB";
