@@ -1,6 +1,6 @@
 import { open } from "sqlite";
 
-import { count } from "../Aggregation";
+import { count, avg } from "../Aggregation";
 import { equal, moreThan, or } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
@@ -27,6 +27,7 @@ import { albums, artists, genres, test } from "./tables";
     await selectAlbumsWithArtistAndGenre(databaseProvider);
     await selectGenresWithMoreThan5Albums(databaseProvider);
     await selectArtist1OrArtist2(databaseProvider);
+    await subQueryTest(databaseProvider);
 
     await updateAlbumName(databaseProvider);
 
@@ -158,6 +159,20 @@ async function selectArtist1OrArtist2(databaseProvider: IDatabaseProvider) {
     console.log(result);
 
     console.log();
+}
+
+async function subQueryTest(databaseProvider: IDatabaseProvider) {
+    const subQuery = from(albums)
+        .select(r => ({ value: avg(r.root.id) }));
+
+    const query = from(albums)
+        .where(r => moreThan(r.root.id, subQuery))
+        .select(r => r.root);
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
 }
 
 async function updateAlbumName(databaseProvider: IDatabaseProvider) {

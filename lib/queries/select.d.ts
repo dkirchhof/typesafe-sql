@@ -33,7 +33,7 @@ declare class SelectQuery<RecordType> {
     select<ResultSetType extends IResultSet>(resultSetFactory: ResultSetFactory<RecordType, ResultSetType>): ExecutableSelectQuery<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : ResultSetType[K]; }>;
     private updateRecord;
 }
-declare class ExecutableSelectQuery<ResultType> {
+export declare class ExecutableSelectQuery<ResultType> {
     private projections;
     private source;
     private joins;
