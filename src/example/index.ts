@@ -163,16 +163,25 @@ async function selectArtist1OrArtist2(databaseProvider: IDatabaseProvider) {
 
 async function subQueryTest(databaseProvider: IDatabaseProvider) {
     const subQuery = from(albums)
-        .select(r => ({ value: avg(r.root.id) }));
+        .select(r => ({ singleValue: avg(r.root.id) }));
 
     const query = from(albums)
         .where(r => moreThan(r.root.id, subQuery))
         .select(r => r.root);
 
+    // const subQuery = from(albums, "a")
+    //     .select(r => ({ singleValue: r.a.id }));
+
+    // const query = from(albums)
+    //     .where(r => isIn(r.root.id, subQuery))
+    //     .select(r => r.root);
+
     console.log(query.toSQL());
 
     const result = await query.execute(databaseProvider);
     console.log(result);
+
+    console.log();
 }
 
 async function updateAlbumName(databaseProvider: IDatabaseProvider) {
