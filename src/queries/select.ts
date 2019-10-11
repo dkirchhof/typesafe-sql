@@ -109,7 +109,7 @@ class SelectQuery<RecordType> {
     }
 }
 
-class ExecutableSelectQuery<ResultType> {
+export class ExecutableSelectQuery<ResultType> {
 
     constructor(
         private projections: Projection[],

@@ -1,10 +1,14 @@
 import { Column } from "./Column";
 import { IConverter } from "./Table";
 import { sanitizeValue } from "./utils";
+import { ExecutableSelectQuery } from "./queries/select";
 
 type SingleValueOperator = "=" | "<>" | ">" | ">=" | "<" | "<=" | "IS" | "IS NOT" | "LIKE" | "NOT LIKE";
 type MultiValueOperator = "IN" | "NOT IN";
 type BooleanOperator = "AND" | "OR";
+
+type ColumnOrValue<Type> = Type | Column<Type> | ExecutableSelectQuery<{ singleValue: Type; }> | null; 
+type ColumnsOrValues<Type> = Array<Type | Column<Type> | null> | ExecutableSelectQuery<{ singleValue: Type; }>;
 
 export class PredicateGroup {
     private readonly operands: Predicate[];
@@ -30,7 +34,7 @@ export abstract class Predicate {
     protected convertAndSanizizeColumnOrValue(converter: IConverter<any, any> | undefined) {
         return (columnOrValue: any) => {
             if (columnOrValue instanceof Column) {
-                return columnOrValue;
+                return columnOrValue.toString();
             }
             
             const convertedValue = converter ? converter.toDB(columnOrValue) : columnOrValue;
@@ -42,11 +46,16 @@ export abstract class Predicate {
 }
 
 export class SingleValuePredicate<Type> extends Predicate {
-    constructor(private readonly column: Column<Type>, private readonly operator: SingleValueOperator, private readonly columnOrValue: Column<Type> | Type) { 
+    constructor(private readonly column: Column<Type>, private readonly operator: SingleValueOperator, private readonly columnOrValue: ColumnOrValue<Type>) { 
         super();
     }
 
     public toString() {
+        // if subquery
+        if(this.columnOrValue instanceof ExecutableSelectQuery) {
+            return `${this.column} ${this.operator} (\n${this.columnOrValue.toSQL()}\n)`;
+        }
+
         const convertAndSanitize = this.convertAndSanizizeColumnOrValue(this.column.options.converter);
         const convertedAndSanitizedColumnOrValue = convertAndSanitize(this.columnOrValue);
 
@@ -55,11 +64,16 @@ export class SingleValuePredicate<Type> extends Predicate {
 }
 
 export class InPredicate<Type> extends Predicate {
-    constructor(private readonly column: Column<Type>, private readonly operator: MultiValueOperator, private readonly columnsOrValues: Array<Column<Type> | Type>) { 
+    constructor(private readonly column: Column<Type>, private readonly operator: MultiValueOperator, private readonly columnsOrValues: ColumnsOrValues<Type>) { 
         super();
     }
 
     public toString() {
+        // if subquery
+        if(this.columnsOrValues instanceof ExecutableSelectQuery) {
+            return `${this.column} ${this.operator} (\n${this.columnsOrValues.toSQL()}\n)`;
+        }
+
         const convertAndSanitize = this.convertAndSanizizeColumnOrValue(this.column.options.converter);
         const convertedAndSanitizedColumnsOrValues = this.columnsOrValues.map(convertAndSanitize);
 
@@ -69,16 +83,16 @@ export class InPredicate<Type> extends Predicate {
 
 export type PredicateFactory<Columns> = (columns: Columns) => Predicate | PredicateGroup;
 
-export const equal = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "=", columnOrValue);
-export const notEqual = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "<>", columnOrValue);
+export const equal = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "=", columnOrValue);
+export const notEqual = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "<>", columnOrValue);
 
-export const moreThan = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, ">", columnOrValue);
-export const moreThanOrEqual = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, ">=", columnOrValue);
-export const lessThan = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "<", columnOrValue);
-export const lessThanOrEqual = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "<=", columnOrValue);
+export const moreThan = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, ">", columnOrValue);
+export const moreThanOrEqual = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, ">=", columnOrValue);
+export const lessThan = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "<", columnOrValue);
+export const lessThanOrEqual = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "<=", columnOrValue);
 
-export const isIn = <Type>(column: Column<Type>, values: Type[]) => new InPredicate(column, "IN", values);
-export const notIn = <Type>(column: Column<Type>, values: Type[]) => new InPredicate(column, "NOT IN", values);
+export const isIn = <Type>(column: Column<Type>, values: ColumnsOrValues<Type>) => new InPredicate(column, "IN", values);
+export const notIn = <Type>(column: Column<Type>, values: ColumnsOrValues<Type>) => new InPredicate(column, "NOT IN", values);
 
 // between
 
@@ -90,5 +104,5 @@ export const notIn = <Type>(column: Column<Type>, values: Type[]) => new InPredi
 export const isNull = <Type>(column: Column<Type>) => new SingleValuePredicate(column, "IS", null);
 export const isNotNull = <Type>(column: Column<Type>) => new SingleValuePredicate(column, "IS NOT", null);
 
-export const like = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "LIKE", columnOrValue);
-export const notLike = <Type>(column: Column<Type>, columnOrValue: Column<Type> | Type) => new SingleValuePredicate(column, "NOT LIKE", columnOrValue);
+export const like = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "LIKE", columnOrValue);
+export const notLike = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "NOT LIKE", columnOrValue);
