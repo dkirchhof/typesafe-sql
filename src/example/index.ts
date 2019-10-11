@@ -133,8 +133,8 @@ async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvid
     const query = from(albums, "album")
         .join("LEFT OUTER", genres, "genre", r => equal(r.album.genreId, r.genre.id))
         .groupBy(r => r.album.genreId)
-        .having(r => moreThan(count(r.album.id), 5))
-        .select(r => ({ genre: r.genre.name, numberOfAlbums: count(r.album.id) }));
+        .having(r => moreThan(count(r.album.name), 5))
+        .select(r => ({ genre: r.genre.name, numberOfAlbums: count(r.album.name) }));
         
     console.log(query.toSQL());
 
