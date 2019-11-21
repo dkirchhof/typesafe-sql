@@ -1,6 +1,6 @@
 import { open } from "sqlite";
 
-import { count, avg } from "../Aggregation";
+import { avg, count } from "../Aggregation";
 import { equal, moreThan, or } from "../Predicate";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
