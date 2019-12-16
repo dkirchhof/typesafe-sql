@@ -5,7 +5,7 @@ export function avg<T>(column: Column<T>) {
 }
 
 export function count<T>(column: Column<T>) {
-    return new Column<T>(`COUNT(${column})`, column.options);
+    return new Column<number>(`COUNT(${column})`, column.options);
 }
 
 export function max<T>(column: Column<T>) {

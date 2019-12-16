@@ -1,6 +1,6 @@
 {
   "name": "typesafe-sql",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "main": "./lib/index.js",
   "scripts": {
     "compile": "tsc",
