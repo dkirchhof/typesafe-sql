@@ -9,6 +9,7 @@
   },
   "author": "",
   "license": "ISC",
+  "repository": "github:dkirchhof/typesafe-sql",
   "dependencies": {},
   "devDependencies": {
     "tslint": "^5.20.0",
