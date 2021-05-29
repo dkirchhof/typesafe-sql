@@ -1,4 +1,5 @@
 import { open } from "sqlite";
+import { Database } from "sqlite3";
 
 import { avg, count } from "../Aggregation";
 import { equal, moreThan, or } from "../Predicate";
@@ -9,8 +10,11 @@ import { Table } from "../Table";
 import { albums, artists, genres, test } from "./tables";
 
 (async () => {
-    // const db = await open("testDatabase/db.db");
-    const db = await open(":memory:");
+    const db = await open({ 
+        driver: Database, 
+        filename: ":memory:",
+    });
+
     const databaseProvider = new SQLiteProvider(db);
 
     // enable foreign keys
