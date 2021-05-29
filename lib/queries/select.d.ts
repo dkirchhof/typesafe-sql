@@ -1,6 +1,6 @@
 import { Column } from "../Column";
 import { GroupBy } from "../GroupBy";
-import { Join, JoinMode } from "../Join";
+import { InnerJoinMode, Join, OuterJoinMode } from "../Join";
 import { OrderBy, OrderDirection } from "../OrderBy";
 import { Predicate, PredicateFactory, PredicateGroup } from "../Predicate";
 import { Projection } from "../Projection";
@@ -24,7 +24,8 @@ declare class SelectQuery<RecordType> {
     protected isDistinct?: boolean;
     protected limitTo?: number;
     constructor(table: Table<any>, alias: string);
-    join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, NullableColumns<JoinedType>>>(joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>): SelectQuery<JoinedRecordType>;
+    join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, Columns<JoinedType>>>(joinMode: InnerJoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>): SelectQuery<JoinedRecordType>;
+    join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, NullableColumns<JoinedType>>>(joinMode: OuterJoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>): SelectQuery<JoinedRecordType>;
     where(predicateFactory: PredicateFactory<RecordType>): this;
     having(predicateFactory: PredicateFactory<RecordType>): this;
     groupBy(columnSelector: ColumnSelector<RecordType>): this;

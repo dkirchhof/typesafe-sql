@@ -1,10 +1,11 @@
 import { Predicate, PredicateGroup } from "./Predicate";
 import { AliasedSource } from "./Source";
-export declare type JoinMode = "CROSS" | "INNER" | "LEFT OUTER";
+export declare type InnerJoinMode = "CROSS" | "INNER";
+export declare type OuterJoinMode = "LEFT OUTER";
 export declare class Join {
     private joinMode;
     private readonly source;
     private predicate;
-    constructor(joinMode: JoinMode, source: AliasedSource, predicate: Predicate | PredicateGroup | null);
+    constructor(joinMode: InnerJoinMode | OuterJoinMode, source: AliasedSource, predicate: Predicate | PredicateGroup | null);
     toString(): string;
 }

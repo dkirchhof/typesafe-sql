@@ -1,6 +1,6 @@
 import { AliasedColumn, Column } from "../Column";
 import { GroupBy } from "../GroupBy";
-import { Join, JoinMode } from "../Join";
+import { InnerJoinMode, Join, OuterJoinMode } from "../Join";
 import { OrderBy, OrderDirection } from "../OrderBy";
 import { Predicate, PredicateFactory, PredicateGroup } from "../Predicate";
 import { Projection } from "../Projection";
@@ -33,9 +33,17 @@ class SelectQuery<RecordType> {
 
         this.updateRecord(table, alias);
     }
+    
+    public join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, Columns<JoinedType>>>(
+        joinMode: InnerJoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>,
+    ): SelectQuery<JoinedRecordType>
 
     public join<JoinedType, Alias extends string, JoinedRecordType extends RecordType & Record<Alias, NullableColumns<JoinedType>>>(
-        joinMode: JoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>,
+        joinMode: OuterJoinMode, table: Table<JoinedType>, alias: Alias, predicateFactory?: PredicateFactory<JoinedRecordType>,
+    ): SelectQuery<JoinedRecordType>
+
+    public join(
+        joinMode: InnerJoinMode | OuterJoinMode, table: Table<any>, alias: string, predicateFactory?: PredicateFactory<any>,
     ) {
         this.updateRecord(table, alias);
 
@@ -43,7 +51,7 @@ class SelectQuery<RecordType> {
 
         this.joins.push(new Join(joinMode, new AliasedSource(table, alias), predicate));
         
-        return this as any as SelectQuery<JoinedRecordType>;
+        return this;
     }
 
     public where(predicateFactory: PredicateFactory<RecordType>) {
