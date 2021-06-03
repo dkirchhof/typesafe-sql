@@ -70,11 +70,11 @@ INSERT INTO albums(id, name)
 select data
 ```ts
 await from(albums)
-    .select(r => r.root)
+    .selectAll()
     .execute(databaseProvider);
 ```
 ```sql
-SELECT root.id AS id, root.name AS name
+SELECT *
   FROM albums AS root
 ```
 
