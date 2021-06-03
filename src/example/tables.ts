@@ -52,3 +52,13 @@ export const test = new Table<{ date: Date }>("test", {
         dataType: "INTEGER",
     },
 });
+
+export const aaa = new Table<{ aaaId: number; aaa: string; }>("aaa", {
+    aaaId: { dataType: "INTEGER" },
+    aaa: { dataType: "TEXT" },
+});
+
+export const bbb = new Table<{ bbbId: number; bbb: string; }>("bbb", {
+    bbbId: { dataType: "INTEGER" },
+    bbb: { dataType: "TEXT" },
+});

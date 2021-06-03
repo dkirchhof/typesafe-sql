@@ -7,11 +7,39 @@ import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { SQLiteProvider } from "../providers/SQLiteProvider";
 import { createTable, deleteFrom, dropTable, from, insertInto, update } from "../queries";
 import { Table } from "../Table";
-import { albums, artists, genres, test } from "./tables";
+import { aaa, albums, artists, bbb, genres, test } from "./tables";
+
+// type a = Record<"a", { id: number, name: string }>
+// type b = Record<"b", { id: string, year: number }>
+// type r = a & b;
+
+// type KeyofKeyof<T> = { [K in keyof T]: keyof T[K] }[keyof T]
+// type Lookup<T, K> = K extends keyof T ? T[K] : never 
+
+// type SimpleFlatten3<T> = { [K in KeyofKeyof<T>]: { [P in keyof T]: Lookup<T[P], K> }[keyof T] } 
+
+// const K: KeyofKeyof<r> = ""
+// const P: keyof r = ""
+// const z: SimpleFlatten3<r>
+// const zz: Lookup<a, "name">
+
+// // zz.
+
+// type aa = { id: number; name: string; };
+// type bb = { id: string; year: number; };
+
+// type t = [aa];
+// type tt = [...t, bb];
+// type alias = ["a", "b"];
+
+// type picked = Record<alias[0], tt[0]>
+// type union = { [K in tt]: number; }
+
+
 
 (async () => {
-    const db = await open({ 
-        driver: Database, 
+    const db = await open({
+        driver: Database,
         filename: ":memory:",
     });
 
@@ -27,7 +55,9 @@ import { albums, artists, genres, test } from "./tables";
     await insertArtists(databaseProvider);
     await insertGenres(databaseProvider);
     await insertAlbums(databaseProvider);
+    
 
+    await selectArtists(databaseProvider);
     await selectAlbumsWithArtistAndGenre(databaseProvider);
     await selectGenresWithMoreThan5Albums(databaseProvider);
     await selectArtist1OrArtist2(databaseProvider);
@@ -37,7 +67,7 @@ import { albums, artists, genres, test } from "./tables";
 
     await deleteGenrePunk(databaseProvider);
     await selectAlbumsWithArtistAndGenre(databaseProvider);
-    
+
     await dropAlbumsTable(databaseProvider);
 
     // converter test
@@ -45,6 +75,14 @@ import { albums, artists, genres, test } from "./tables";
     await insertDateToTestTable(databaseProvider);
     await updateDateInTestTable(databaseProvider);
     await getDateFromTestTable(databaseProvider);
+    
+    // select all and outer join test
+    await createExampleTable(aaa, databaseProvider);
+    await createExampleTable(bbb, databaseProvider);
+    await insertTestDataIntoAAA(databaseProvider);
+    await insertTestDataIntoBBB(databaseProvider);
+    await selectAllFromAAA(databaseProvider);
+    await selectAllFromAAAandBBB(databaseProvider);
 
     db.close();
 })();
@@ -120,12 +158,24 @@ async function insertAlbums(databaseProvider: IDatabaseProvider) {
     console.log();
 }
 
+async function selectArtists(databaseProvider: IDatabaseProvider) {
+    const query = from(artists, "artist")
+        .select(r => r.artist);
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
 async function selectAlbumsWithArtistAndGenre(databaseProvider: IDatabaseProvider) {
     const query = from(albums, "album")
         .join("LEFT OUTER", artists, "artist", r => equal(r.album.artistId, r.artist.id))
         .join("LEFT OUTER", genres, "genre", r => equal(r.album.genreId, r.genre.id))
         .select(r => ({ album: r.album.name, artist: r.artist.name, genre: r.genre.name }));
-        
+
     console.log(query.toSQL());
 
     const result = await query.execute(databaseProvider);
@@ -140,7 +190,7 @@ async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvid
         .groupBy(r => r.album.genreId)
         .having(r => moreThan(count(r.album.name), 5))
         .select(r => ({ genre: r.genre.name, numberOfAlbums: count(r.album.name) }));
-        
+
     console.log(query.toSQL());
 
     const result = await query.execute(databaseProvider);
@@ -152,11 +202,11 @@ async function selectGenresWithMoreThan5Albums(databaseProvider: IDatabaseProvid
 async function selectArtist1OrArtist2(databaseProvider: IDatabaseProvider) {
     const query = from(artists, "artist")
         .where(r => or(
-            equal(r.artist.id, 1), 
+            equal(r.artist.id, 1),
             equal(r.artist.id, 2),
         ))
         .select(r => r.artist);
-        
+
     console.log(query.toSQL());
 
     const result = await query.execute(databaseProvider);
@@ -191,13 +241,13 @@ async function subQueryTest(databaseProvider: IDatabaseProvider) {
 async function updateAlbumName(databaseProvider: IDatabaseProvider) {
     console.log("before");
     console.log(await from(albums, "album").where(r => equal(r.album.id, 2)).select(r => ({ ...r.album })).execute(databaseProvider));
-    
+
     const query = update(albums)
         .set({ name: "Lost Forever // Lost Together" })
         .where(r => equal(r.name, "Lost Forever / Lost Together"));
-    
+
     console.log(query.toSQL());
-    
+
     const result = await query.execute(databaseProvider);
     console.log(result);
 
@@ -257,6 +307,63 @@ async function getDateFromTestTable(databaseProvider: IDatabaseProvider) {
 async function updateDateInTestTable(databaseProvider: IDatabaseProvider) {
     const query = update(test)
         .set({ date: new Date("2018-01-01") });
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function insertTestDataIntoAAA(databaseProvider: IDatabaseProvider) {
+    const query = insertInto(aaa)
+        .values([
+            { aaaId: 1, aaa: "a" },
+            { aaaId: 2, aaa: "b" },
+            { aaaId: 3, aaa: "c" },
+        ]);
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function insertTestDataIntoBBB(databaseProvider: IDatabaseProvider) {
+    const query = insertInto(bbb)
+        .values([
+            { bbbId: 1, bbb: "x" },
+            { bbbId: 4, bbb: "y" },
+            { bbbId: 5, bbb: "z" },
+        ]);
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function selectAllFromAAA(databaseProvider: IDatabaseProvider) {
+    const query = from(aaa) 
+        .selectAll();
+
+    console.log(query.toSQL());
+
+    const result = await query.execute(databaseProvider);
+    console.log(result);
+
+    console.log();
+}
+
+async function selectAllFromAAAandBBB(databaseProvider: IDatabaseProvider) {
+    const query = from(aaa, "a") 
+        .join("LEFT OUTER", bbb, "b", r => equal(r.a.aaaId, r.b.bbbId))
+        .selectAll();
 
     console.log(query.toSQL());
 

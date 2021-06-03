@@ -4,7 +4,7 @@ export declare type InnerJoinMode = "CROSS" | "INNER";
 export declare type OuterJoinMode = "LEFT OUTER";
 export declare class Join {
     private joinMode;
-    private readonly source;
+    readonly source: AliasedSource;
     private predicate;
     constructor(joinMode: InnerJoinMode | OuterJoinMode, source: AliasedSource, predicate: Predicate | PredicateGroup | null);
     toString(): string;

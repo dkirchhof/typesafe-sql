@@ -1,14 +1,14 @@
 import { Column } from "./Column";
 import { IConverter } from "./Table";
 import { sanitizeValue } from "./utils";
-import { ExecutableSelectQuery } from "./queries/select";
+import { ExecutableSelectQueryWithProjections } from "./queries/select";
 
 type SingleValueOperator = "=" | "<>" | ">" | ">=" | "<" | "<=" | "IS" | "IS NOT" | "LIKE" | "NOT LIKE";
 type MultiValueOperator = "IN" | "NOT IN";
 type BooleanOperator = "AND" | "OR";
 
-type ColumnOrValue<Type> = Type | Column<Type> | ExecutableSelectQuery<{ singleValue: Type; }> | null; 
-type ColumnsOrValues<Type> = Array<Type | Column<Type> | null> | ExecutableSelectQuery<{ singleValue: Type; }>;
+type ColumnOrValue<Type> = Type | Column<Type> | ExecutableSelectQueryWithProjections<{ singleValue: Type; }> | null; 
+type ColumnOrValues<Type> = Array<Type | Column<Type> | null> | ExecutableSelectQueryWithProjections<{ singleValue: Type; }>;
 
 export class PredicateGroup {
     private readonly operands: Predicate[];
@@ -52,7 +52,7 @@ export class SingleValuePredicate<Type> extends Predicate {
 
     public toString() {
         // if subquery
-        if(this.columnOrValue instanceof ExecutableSelectQuery) {
+        if(this.columnOrValue instanceof ExecutableSelectQueryWithProjections) {
             return `${this.column} ${this.operator} (\n${this.columnOrValue.toSQL()}\n)`;
         }
 
@@ -64,13 +64,13 @@ export class SingleValuePredicate<Type> extends Predicate {
 }
 
 export class InPredicate<Type> extends Predicate {
-    constructor(private readonly column: Column<Type>, private readonly operator: MultiValueOperator, private readonly columnsOrValues: ColumnsOrValues<Type>) { 
+    constructor(private readonly column: Column<Type>, private readonly operator: MultiValueOperator, private readonly columnsOrValues: ColumnOrValues<Type>) { 
         super();
     }
 
     public toString() {
         // if subquery
-        if(this.columnsOrValues instanceof ExecutableSelectQuery) {
+        if(this.columnsOrValues instanceof ExecutableSelectQueryWithProjections) {
             return `${this.column} ${this.operator} (\n${this.columnsOrValues.toSQL()}\n)`;
         }
 
@@ -91,8 +91,8 @@ export const moreThanOrEqual = <Type>(column: Column<Type>, columnOrValue: Colum
 export const lessThan = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "<", columnOrValue);
 export const lessThanOrEqual = <Type>(column: Column<Type>, columnOrValue: ColumnOrValue<Type>) => new SingleValuePredicate(column, "<=", columnOrValue);
 
-export const isIn = <Type>(column: Column<Type>, values: ColumnsOrValues<Type>) => new InPredicate(column, "IN", values);
-export const notIn = <Type>(column: Column<Type>, values: ColumnsOrValues<Type>) => new InPredicate(column, "NOT IN", values);
+export const isIn = <Type>(column: Column<Type>, values: ColumnOrValues<Type>) => new InPredicate(column, "IN", values);
+export const notIn = <Type>(column: Column<Type>, values: ColumnOrValues<Type>) => new InPredicate(column, "NOT IN", values);
 
 // between
 

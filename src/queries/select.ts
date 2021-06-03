@@ -6,12 +6,16 @@ import { Predicate, PredicateFactory, PredicateGroup } from "../Predicate";
 import { Projection } from "../Projection";
 import { IDatabaseProvider } from "../providers/IDatabaseProvider";
 import { AliasedSource } from "../Source";
-import { Columns, NullableColumns, Table } from "../Table";
+import { ColumnOptions, Columns, NullableColumns, Table } from "../Table";
 
 interface IResultSet { [s: string]: Column<any>; }
 
 type ColumnSelector<RecordType> = (record: RecordType) => Column<any>;
 type ResultSetFactory<RecordType, ResultSetType extends IResultSet> = (record: RecordType) => ResultSetType;
+
+type KeyofKeyof<T> = { [K in keyof T]: keyof T[K] }[keyof T]
+type Lookup<T, K> = K extends keyof T ? T[K] : never 
+type Flatten<T> = { [K in KeyofKeyof<T>]: { [P in keyof T]: Lookup<T[P], K> }[keyof T] } 
 
 export function from<Type, Alias extends string = "root">(table: Table<Type>, alias?: Alias) {
     return new SelectQuery<Record<Alias, Columns<Type>>>(table, alias || "root");
@@ -97,8 +101,23 @@ class SelectQuery<RecordType> {
 
         const selectedColumns = Object.entries(resultSetSchema).map(([alias, column]) => new Projection(column, alias));
 
-        return new ExecutableSelectQuery<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : ResultSetType[K]; }>(
+        return new ExecutableSelectQueryWithProjections<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : never; }>(
             selectedColumns,
+            this.source,
+            this.joins,
+            this.wheres,
+            this.havings,
+            this.groupBys,
+            this.orderBys,
+            this.isDistinct,
+            this.limitTo,
+        );
+    }
+
+    public selectAll() {
+        type ResultSetType = Flatten<RecordType>;
+
+        return new ExecutableSelectQueryWithoutProjections<{ [K in keyof ResultSetType]: ResultSetType[K] extends Column<infer T> ? T : never; }>(
             this.source,
             this.joins,
             this.wheres,
@@ -117,36 +136,18 @@ class SelectQuery<RecordType> {
     }
 }
 
-export class ExecutableSelectQuery<ResultType> {
+export abstract class ExecutableSelectQuery {
 
     constructor(
-        private projections: Projection[],
-        private source: AliasedSource,
-        private joins: Join[],
-        private wheres: Array<Predicate | PredicateGroup>,
-        private havings: Array<Predicate | PredicateGroup>,
-        private groupBys: GroupBy[], 
-        private orderBys: OrderBy[],
-        private isDistinct?: boolean,
-        private limitTo?: number,
+        protected source: AliasedSource,
+        protected joins: Join[],
+        protected wheres: Array<Predicate | PredicateGroup>,
+        protected havings: Array<Predicate | PredicateGroup>,
+        protected groupBys: GroupBy[], 
+        protected orderBys: OrderBy[],
+        protected isDistinct?: boolean,
+        protected limitTo?: number,
     ) { }
-
-    public async execute(databaseProvider: IDatabaseProvider) {
-        const sql = this.toSQL();
-        const rawTuples = await databaseProvider.get(sql) as any[];
-
-        return rawTuples.map(tuple => 
-            Object.entries(tuple).reduce((jsTuple, [alias, value]) => {
-                const { converter } = this.getColumnOptionsByAlias(alias);
-
-                return {
-                    ...jsTuple,
-                    [alias]: converter ? converter.toJS(value) : value,
-                };
-
-            }, { } as ResultType),
-        );
-    }
 
     public toSQL() {
         const sqlParts: string[] = [
@@ -166,52 +167,121 @@ export class ExecutableSelectQuery<ResultType> {
             .filter(Boolean)
             .join("\n  ");
     }
+    
+    // region string methods
+    
+    protected abstract selectedColumnsToSQL(): string;
+
+    protected selectToSQL() {
+        return `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`;
+    }
+
+    protected sourceToSQL() {
+        return `FROM ${this.source}`;
+    }
+
+    protected joinsToSQL() {
+        return this.joins.join("\n  ");
+    }
+
+    protected distinctToSQL() {
+        return this.isDistinct ? "DISTINCT " : "";
+    }
+
+    protected wheresToSQL() {
+        return this.wheres.length ? `WHERE ${this.wheres.join(" AND ")}` : "";
+    }
+
+    protected havingsToSQL() {
+        return this.havings.length ? `HAVING ${this.havings.join(" AND ")}` : "";
+    }
+
+    protected groupBysToSQL() {
+        return this.groupBys.length ? `GROUP BY ${this.groupBys.join(", ")}` : "";
+    }
+
+    protected orderBysToSQL() {
+        return this.orderBys.length ? `ORDER BY ${this.orderBys.join(", ")}` : "";
+    }
+
+    protected limitToSQL() {
+        return this.limitTo ? `LIMIT ${this.limitTo}` : "";
+    }
+
+    // endregion
+}
+
+export class ExecutableSelectQueryWithProjections<ResultType> extends ExecutableSelectQuery {
+    constructor(
+         private projections: Projection[],
+         source: AliasedSource,
+         joins: Join[],
+         wheres: Array<Predicate | PredicateGroup>,
+         havings: Array<Predicate | PredicateGroup>,
+         groupBys: GroupBy[], 
+         orderBys: OrderBy[],
+         isDistinct?: boolean,
+         limitTo?: number,
+    ) {
+        super(source, joins, wheres, havings, groupBys, orderBys, isDistinct, limitTo);
+    }
+
+    public async execute(databaseProvider: IDatabaseProvider) {
+        const sql = this.toSQL();
+        const rawTuples = await databaseProvider.get(sql) as any[];
+
+        return rawTuples.map(tuple => 
+            Object.entries(tuple).reduce((jsTuple, [alias, value]) => {
+                const { converter } = this.getColumnOptionsByAlias(alias);
+
+                return {
+                    ...jsTuple,
+                    [alias]: converter ? converter.toJS(value) : value,
+                };
+
+            }, { } as ResultType),
+        );
+    }
 
     private getColumnOptionsByAlias(alias: string) {
         return this.projections.find(p => p.alias === alias)!.column.options;
     }
 
-    // region string methods
-
-    private selectToSQL() {
-        return `SELECT ${this.distinctToSQL()}${this.selectedColumnsToSQL()}`;
-    }
-
-    private sourceToSQL() {
-        return `FROM ${this.source}`;
-    }
-
-    private joinsToSQL() {
-        return this.joins.join("\n  ");
-    }
-
-    private distinctToSQL() {
-        return this.isDistinct ? "DISTINCT " : "";
-    }
-
-    private selectedColumnsToSQL() {
+    protected selectedColumnsToSQL() {
         return this.projections.join(", ");
     }
+}
 
-    private wheresToSQL() {
-        return this.wheres.length ? `WHERE ${this.wheres.join(" AND ")}` : "";
+export class ExecutableSelectQueryWithoutProjections<ResultType> extends ExecutableSelectQuery {
+    public async execute(databaseProvider: IDatabaseProvider) {
+        const sql = this.toSQL();
+        const rawTuples = await databaseProvider.get(sql) as any[];
+        
+        const allColumnOptions = this.getAllColumnOptions();
+
+        return rawTuples.map(tuple => 
+            Object.entries(tuple).reduce((jsTuple, [columnName, value]) => {
+                const { converter } = allColumnOptions[columnName];
+
+                return {
+                    ...jsTuple,
+                    [columnName]: converter ? converter.toJS(value) : value,
+                };
+
+            }, { } as ResultType),
+        );
+    }
+    
+    private getAllSources() {
+        return [this.source].concat(this.joins.map(join => join.source));
     }
 
-    private havingsToSQL() {
-        return this.havings.length ? `HAVING ${this.havings.join(" AND ")}` : "";
+    private getAllColumnOptions() {
+        return this.getAllSources()
+            .reduce((columns, source) => ({ ...columns, ...source.table.columns }), {} as ColumnOptions<any>);
     }
 
-    private groupBysToSQL() {
-        return this.groupBys.length ? `GROUP BY ${this.groupBys.join(", ")}` : "";
+    protected selectedColumnsToSQL() {
+        return "*";
     }
-
-    private orderBysToSQL() {
-        return this.orderBys.length ? `ORDER BY ${this.orderBys.join(", ")}` : "";
-    }
-
-    private limitToSQL() {
-        return this.limitTo ? `LIMIT ${this.limitTo}` : "";
-    }
-
-    // endregion
 }
