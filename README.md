@@ -17,9 +17,14 @@ $ yarn add sqlite
 open database and create a provider
 ```ts
 import { open } from "sqlite";
+import { Database } from "sqlite3";
 import { SQLiteProvider } from "typesafe-sql";
 
-const db = await open(":memory:");
+const db = await open({
+    driver: Database,
+    filename: ":memory:",
+});
+
 const databaseProvider = new SQLiteProvider(db);
 ```
 

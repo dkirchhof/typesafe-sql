@@ -9,34 +9,6 @@ import { createTable, deleteFrom, dropTable, from, insertInto, update } from "..
 import { Table } from "../Table";
 import { aaa, albums, artists, bbb, genres, test } from "./tables";
 
-// type a = Record<"a", { id: number, name: string }>
-// type b = Record<"b", { id: string, year: number }>
-// type r = a & b;
-
-// type KeyofKeyof<T> = { [K in keyof T]: keyof T[K] }[keyof T]
-// type Lookup<T, K> = K extends keyof T ? T[K] : never 
-
-// type SimpleFlatten3<T> = { [K in KeyofKeyof<T>]: { [P in keyof T]: Lookup<T[P], K> }[keyof T] } 
-
-// const K: KeyofKeyof<r> = ""
-// const P: keyof r = ""
-// const z: SimpleFlatten3<r>
-// const zz: Lookup<a, "name">
-
-// // zz.
-
-// type aa = { id: number; name: string; };
-// type bb = { id: string; year: number; };
-
-// type t = [aa];
-// type tt = [...t, bb];
-// type alias = ["a", "b"];
-
-// type picked = Record<alias[0], tt[0]>
-// type union = { [K in tt]: number; }
-
-
-
 (async () => {
     const db = await open({
         driver: Database,
